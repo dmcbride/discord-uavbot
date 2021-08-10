@@ -46,9 +46,17 @@ namespace uav.Command
             }
 
             var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
-            var hours = Math.Ceiling(arks/6);
 
-            return ReplyAsync($"To get to a GV of {goalGv} from {gv} starting with cash-on-hand of {cash}, you need {arks} cash arks.  At about 6 cash arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.");
+            // here we're assuming that you get about 6 cash arks per hour (6 minutes per ark, 10 arks per hour, 60% cash)
+            var hours = Math.Floor(arks / 6);
+
+            // and then if we got that many arks in that time, we should get about 40/60 of that in DM.
+            var dm = Math.Floor(arks * 40 / 60);
+
+            return ReplyAsync(
+                $@"To get to a GV of {goalGv} from {gv} starting with cash-on-hand of {cash}, you need {arks} <:boostcashwindfall:642974216681029644> arks.
+At about 6 <:boostcashwindfall:642974216681029644> arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
+During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> arks, for a total of {5 * dm} <:ipmdm:628302645265956875>.");
         }
 
         [Command("cw")]
