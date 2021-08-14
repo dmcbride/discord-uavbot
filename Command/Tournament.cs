@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Commands;
+using uav.Constants;
 
 namespace uav.Command
 {
@@ -22,7 +23,7 @@ namespace uav.Command
             if (now.DayOfWeek == DayOfWeek.Saturday)
             {
                 var endOfDay = now.Date.AddDays(1);
-                return $"The tournament is already going on! You only have {SpanToReadable(endOfDay - now)} left to join it!";
+                return $"The tournament is already going on! You only have {SpanToReadable(endOfDay - now)} left to join it! Good luck! {Emoji.four_leaf_clover}";
             }
             else
             {
@@ -33,7 +34,7 @@ namespace uav.Command
                 }
                 var onGoing = now.DayOfWeek == DayOfWeek.Sunday ? "The tournament is going on, but you can no longer enter it.  You can join the next one.  " : string.Empty;
 
-                return $"{onGoing}The next tournament starts in {SpanToReadable(endOfFriday - now)}.";
+                return $"{onGoing}The next tournament starts in {SpanToReadable(endOfFriday - now)}. Good luck! {Emoji.four_leaf_clover}";
             }
 
         }

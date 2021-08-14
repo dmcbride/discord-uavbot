@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using uav.Attributes;
 using uav.Extensions;
+using uav.Constants;
 
 namespace uav.Command
 {
@@ -28,11 +29,11 @@ namespace uav.Command
         {
             cash ??= gv;
 
-            if (!TryFromString(gv, out var gvValue) ||
-                !TryFromString(goalGv, out var goalGvValue) ||
-                !TryFromString(cash, out var cashValue))
+            if (!TryFromString(gv, out var gvValue, out var error) ||
+                !TryFromString(goalGv, out var goalGvValue, out error) ||
+                !TryFromString(cash, out var cashValue, out error))
             {
-                return ReplyAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`");
+                return ReplyAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}");
             }
 
             if (goalGvValue < gvValue)
@@ -54,9 +55,9 @@ namespace uav.Command
             var dm = Math.Floor(arks * 40 / 60);
 
             return ReplyAsync(
-                $@"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)} starting with cash-on-hand of {DualString(cashValue)}, you need {arks} <:boostcashwindfall:642974216681029644> arks.
-At about 6 <:boostcashwindfall:642974216681029644> arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
-During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> arks, for a total of {5 * dm} <:ipmdm:628302645265956875>.");
+                $@"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)} starting with cash-on-hand of {DualString(cashValue)}, you need {arks} {Emoji.boostcashwindfall} arks.
+At about 6 {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
+During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} arks, for a total of {5 * dm} {uav.Constants.Emoji.ipmdm}.");
         }
 
         [Command("cw")]
@@ -64,10 +65,10 @@ During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> a
         [Usage("currentGV goalGV")]
         public Task CW(string gv, string goalGv)
         {
-            if (!TryFromString(gv, out var gvValue) ||
-                !TryFromString(goalGv, out var goalGvValue))
+            if (!TryFromString(gv, out var gvValue, out var error) ||
+                !TryFromString(goalGv, out var goalGvValue, out error))
             {
-                return ReplyAsync($"Invalid input. Usage: `!cw currentGV goalGV");
+                return ReplyAsync($"Invalid input. Usage: `!cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}");
             }
 
             if (goalGvValue < gvValue)
@@ -76,17 +77,21 @@ During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> a
             }
 
             var cws = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
-            return ReplyAsync($"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)}, you need {cws} cash windfalls.");
+            var dmRequired = cws * 30;
+            return ReplyAsync($"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)}, you need {cws} cash windfalls. This may cost up to {dmRequired} {uav.Constants.Emoji.ipmdm}");
         }
 
         private static readonly IReadOnlyDictionary<string, int> suffixExponent;
         private static readonly IReadOnlyDictionary<int, string> toSuffixExponent;
+        private static readonly IReadOnlyList<string> recommendedSuffixes;
 
         static Arks()
         {
-            var s = new[] {
+            recommendedSuffixes = new[] {
                 "k", "M", "B", "T", "q", "Q", "s", "S", "O", "N", "D"
                 }.Concat(Enumerable.Range((int)'a', (int)'m' - (int)'a' + 1).Select(i => "a" + (char)i))
+                .ToList();
+            var s = recommendedSuffixes
                 .Select((s, i) => (s, i: 3*(i+1)))
                 .ToDictionary(k => k.s, k => k.i);
             toSuffixExponent = s.ToDictionary(kv => kv.Value, kv => kv.Key); // reverse lookup
@@ -96,10 +101,11 @@ During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> a
         }
 
         private static readonly Regex SiNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)(?<suffix>[a-zA-Z]{0,2})$");
-        private static readonly Regex ExpNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)[eE](?<exp>\d+)$");
+        private static readonly Regex ExpNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)[eE]\+?(?<exp>\d+)$");
 
-        public bool TryFromString(string v, out double qty)
+        public bool TryFromString(string v, out double qty, out string errorMessage)
         {
+            errorMessage = null;
             var m = SiNumber.Match(v);
             qty = 0d;
             if (m.Success)
@@ -112,6 +118,11 @@ During this time, you can expect to get about {dm} <:ipmdm:628302645265956875> a
                 }
                 else if (!suffix.IsNullOrEmpty()) // you tried something else. Don't do that.
                 {
+                    if (suffixExponent.TryGetValue(suffix.ToLowerInvariant(), out _) ||
+                        suffixExponent.TryGetValue(suffix.ToUpperInvariant(), out _))
+                    {
+                        errorMessage = $"Perhaps you got the case wrong. Suffixes are allowed to be one of: {string.Join(",", recommendedSuffixes)}.";
+                    }
                     return false;
                 }
                 return true;

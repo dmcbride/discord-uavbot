@@ -30,23 +30,17 @@ namespace uav
 
         private Task Log(LogMessage message)
         {
-            switch (message.Severity)
+            Console.ForegroundColor = message.Severity switch
             {
-                case LogSeverity.Critical:
-                case LogSeverity.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-                case LogSeverity.Warning:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case LogSeverity.Info:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    break;
-                case LogSeverity.Verbose:
-                case LogSeverity.Debug:
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    break;
-            }
+                LogSeverity.Critical => ConsoleColor.Red,
+                LogSeverity.Error => ConsoleColor.Red,
+                LogSeverity.Warning => ConsoleColor.Yellow,
+                LogSeverity.Info => ConsoleColor.White,
+                LogSeverity.Verbose => ConsoleColor.DarkGray,
+                LogSeverity.Debug => ConsoleColor.DarkGray,
+                _ => ConsoleColor.White
+            };
+
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
             Console.ResetColor();
             
