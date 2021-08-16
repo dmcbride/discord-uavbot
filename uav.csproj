@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.NET" Version="2.4.0" />
+    <PackageReference Include="Log4NET" Version="2.0.12" />
   </ItemGroup>
 
 </Project>

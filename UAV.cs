@@ -3,6 +3,12 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using log4net.Layout;
+using log4net;
+using log4net.Repository.Hierarchy;
+using log4net.Core;
+using log4net.Appender;
+using log4net.Config;
 
 namespace uav
 {
@@ -13,6 +19,8 @@ namespace uav
 
         public UAV()
         {
+            SetupLog4Net();
+
             _client = new DiscordSocketClient();
             _client.Log += Log;
         }
@@ -28,6 +36,37 @@ namespace uav
             await Task.Delay(-1);
         }
 
+        private void SetupLog4Net()
+        {
+            var hierarchy = (Hierarchy)LogManager.GetRepository();
+            hierarchy.Root.RemoveAllAppenders();
+            hierarchy.Root.Level = Level.Debug;
+
+            var patternLayout = new PatternLayout
+            {
+                ConversionPattern = "%date{yyyy-MM-dd HH:mm:ss.fff} [%logger] %message%newline%exception",
+            };
+            patternLayout.ActivateOptions();
+
+            var rollingFileAppender = new RollingFileAppender
+            {
+                AppendToFile = true,
+                File = @"Logs/uav.log",
+                Layout = patternLayout,
+                MaxSizeRollBackups = 5,
+                MaxFileSize = 1_000_000,
+                RollingStyle = RollingFileAppender.RollingMode.Size,
+                StaticLogFileName = true,
+                Encoding = System.Text.Encoding.UTF8,
+            };
+            rollingFileAppender.ActivateOptions()   ;
+            hierarchy.Root.AddAppender(rollingFileAppender);
+
+            hierarchy.Root.Level = Level.Info;
+            hierarchy.Configured = true;
+            BasicConfigurator.Configure(hierarchy);
+        }
+
         private Task Log(LogMessage message)
         {
             Console.ForegroundColor = message.Severity switch
@@ -41,9 +80,24 @@ namespace uav
                 _ => ConsoleColor.White
             };
 
-            Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
+            // Need to figure out why log4net is writing garbage to the console when it's writing perfectly fine
+            // to its logfile.
+            //Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
             Console.ResetColor();
             
+            var logger = LogManager.GetLogger(this.GetType());
+            Action<object, Exception> logMethod = message.Severity switch
+            {
+                LogSeverity.Critical => logger.Fatal,
+                LogSeverity.Error => logger.Error,
+                LogSeverity.Warning => logger.Warn,
+                LogSeverity.Info => logger.Info,
+                LogSeverity.Verbose => logger.Info,
+                LogSeverity.Debug => logger.Debug,
+                _ => null
+            };
+            logMethod?.Invoke(message.Message, message.Exception);
+
             return Task.CompletedTask;
         }
     }
