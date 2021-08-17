@@ -7,6 +7,8 @@ using Discord.Commands;
 using uav.Attributes;
 using uav.Extensions;
 using uav.Constants;
+using uav.Database;
+using uav.Database.Model;
 
 namespace uav.Command
 {
@@ -79,6 +81,38 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             var cws = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
             var dmRequired = cws * 30;
             return ReplyAsync($"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)}, you need {cws} cash windfalls. This may cost up to {dmRequired} {uav.Constants.Emoji.ipmdm}");
+        }
+
+        [Command("basecred")]
+        [Summary("Tell UAV about the base credits you get for your current GV")]
+        [Usage("currentGV baseCredits")]
+        public async Task BaseCredits(string gv, int credits)
+        {
+            if (!TryFromString(gv, out var gvValue, out var error))
+            {
+                await ReplyAsync($"Invalid input. Usage: `!basecred currentGV baseCredits`{(error != null ? $"\n{error}" : string.Empty)}");
+                return;
+            }
+
+            var channel = await Context.User.GetOrCreateDMChannelAsync();
+            try
+            {
+                var dbService = new DatabaseService();
+                var value = new ArkValue
+                {
+                    BaseCredits = credits,
+                    Gv = gvValue,
+                    Reporter = Context.User.ToString()
+                };
+                await dbService.AddArkValue(value);
+
+                // send back private reply
+                await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {DualString(gvValue)} gives base credits of {credits}");
+            }
+            catch (System.Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private static readonly IReadOnlyDictionary<string, int> suffixExponent;

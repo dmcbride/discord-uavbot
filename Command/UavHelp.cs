@@ -45,7 +45,6 @@ namespace uav.Command
         public async Task Help()
         {
             var channel = await Context.User.GetOrCreateDMChannelAsync();
-            //channel = await Context.User.GetOrCreateDMChannelAsync() as SocketDMChannel; // not sure, but some reports indicate two of these may be required?
             await channel.SendMessageAsync(HelpText);
         }
 
