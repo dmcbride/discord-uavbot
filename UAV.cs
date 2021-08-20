@@ -64,7 +64,6 @@ namespace uav
 
             hierarchy.Root.Level = Level.Info;
             hierarchy.Configured = true;
-            BasicConfigurator.Configure(hierarchy);
         }
 
         private Task Log(LogMessage message)

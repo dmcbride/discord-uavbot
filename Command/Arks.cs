@@ -48,6 +48,11 @@ namespace uav.Command
                 return ReplyAsync($"Your cash on hand is more than your current GV, that's probably wrong.");
             }
 
+            if (cashValue < goalGvValue * 0.54)
+            {
+                return ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {Emoji.itemTP} and {Emoji.itemFR} first.");
+            }
+
             var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
 
             // here we're assuming that you get about 6 cash arks per hour (6 minutes per ark, 10 arks per hour, 60% cash)
@@ -91,6 +96,12 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             if (!TryFromString(gv, out var gvValue, out var error))
             {
                 await ReplyAsync($"Invalid input. Usage: `!basecred currentGV baseCredits`{(error != null ? $"\n{error}" : string.Empty)}");
+                return;
+            }
+
+            if (gvValue < 10_000_000 || gvValue > 1e100)
+            {
+                await ReplyAsync($"Invalid input. GV must be between 10M and 1E+100");
                 return;
             }
 
