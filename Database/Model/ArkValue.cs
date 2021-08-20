@@ -8,5 +8,6 @@ namespace uav.Database.Model
         public double Gv { get; set; }
         public int BaseCredits { get; set; }
         public DateTimeOffset Created { get; set; }
+        public bool Oopsed { get; set; }
     }
 }

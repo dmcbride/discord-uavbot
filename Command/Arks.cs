@@ -9,11 +9,14 @@ using uav.Extensions;
 using uav.Constants;
 using uav.Database;
 using uav.Database.Model;
+using uav.Models;
 
 namespace uav.Command
 {
     public class Arks : ModuleBase<SocketCommandContext>
     {
+        private readonly Credits creditService = new Credits();
+        private readonly DatabaseService databaseService = new DatabaseService();
 
         public double ArkCalculate(double gv, double goalGv, double cash, double exponent)
         {
@@ -48,9 +51,9 @@ namespace uav.Command
                 return ReplyAsync($"Your cash on hand is more than your current GV, that's probably wrong.");
             }
 
-            if (cashValue < goalGvValue * 0.54)
+            if (cashValue < gvValue * 0.54)
             {
-                return ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {Emoji.itemTP} and {Emoji.itemFR} first.");
+                return ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {Emoji.itemTP} and {Emoji.itemFR} first.");
             }
 
             var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
@@ -89,9 +92,9 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
         }
 
         [Command("basecred")]
-        [Summary("Tell UAV about the base credits you get for your current GV")]
-        [Usage("currentGV baseCredits")]
-        public async Task BaseCredits(string gv, int credits)
+        [Summary("Tell UAV about the base credits you get for your current GV, or query the range allowed for that GV tier.")]
+        [Usage("currentGV [baseCredits]")]
+        public async Task BaseCredits(string gv, int? credits = null)
         {
             if (!TryFromString(gv, out var gvValue, out var error))
             {
@@ -105,17 +108,37 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                 return;
             }
 
+            var expectedMinimumCredits = creditService.TierCredits(gvValue);
+            var expectedMaximumCredits = creditService.TierCredits(gvValue * 10);
+            if (credits == null)
+            {
+                var (lower,upper) = creditService.TierRange(gvValue);
+                var totalDatapoints = await databaseService.CountInRange(lower, upper);
+                var msg = $"This tier's base credits range is {expectedMinimumCredits} through {expectedMaximumCredits - 1}. In this range, we have {totalDatapoints} data point(s).";
+                if (expectedMinimumCredits == expectedMaximumCredits)
+                {
+                    msg = $"This is the max tier, with credits of {expectedMaximumCredits}";
+                }
+                await ReplyAsync(msg);
+                return;
+            }
+
+            if (credits < expectedMinimumCredits || expectedMaximumCredits < credits)
+            {
+                await ReplyAsync($"The given credits of {credits} lies outside the expected range for this tier of {expectedMinimumCredits} - {expectedMaximumCredits}. If this is incorrect, please send a screen-cap to Tanktalus showing this.");
+                return;
+            }
+
             var channel = await Context.User.GetOrCreateDMChannelAsync();
             try
             {
-                var dbService = new DatabaseService();
                 var value = new ArkValue
                 {
-                    BaseCredits = credits,
+                    BaseCredits = credits.Value,
                     Gv = gvValue,
                     Reporter = Context.User.ToString()
                 };
-                await dbService.AddArkValue(value);
+                await databaseService.AddArkValue(value);
 
                 // send back private reply
                 await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {DualString(gvValue)} gives base credits of {credits}");

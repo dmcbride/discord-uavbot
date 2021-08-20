@@ -19,18 +19,29 @@ namespace uav.Database
             await connection.ExecuteAsync(@"INSERT INTO ark_value (reporter, gv, base_credits) VALUES (@Reporter, @Gv, @BaseCredits)", v);
         }
 
+        public async Task<int> CountInRange(double gvMin, double gvMax)
+        {
+            using var connection = Connect;
+            var parameters = new {gvMin, gvMax};
+            var values = await connection.QueryAsync<int>(
+                @"SELECT COUNT(*) FROM ark_value WHERE gv >= @gvMin AND gv < @gvMax AND oopsed = 0",
+                parameters
+            );
+            return values.Single();
+        }
+
         public async Task<IEnumerable<ArkValue>> FindValue(double v)
         {
             using var connection = Connect;
             var values = await connection.QueryAsync<ArkValue>(
                 @"SELECT * FROM (
                     SELECT * FROM ark_value
-                     WHERE gv < @v
+                     WHERE gv < @v AND oopsed = 0
                      ORDER BY gv DESC
                      LIMIT 5
                   ) UNION (
                     SELECT * FROM ark_value
-                     WHERE gv > @v
+                     WHERE gv > @v AND oopsed = 0
                      ORDER BY gv ASC
                      LIMIT 5
                      )", new { v }

@@ -1,0 +1,1 @@
+ALTER TABLE ark_value ADD oopsed TINYINT(1) DEFAULT 0;

@@ -79,9 +79,7 @@ namespace uav
                 _ => ConsoleColor.White
             };
 
-            // Need to figure out why log4net is writing garbage to the console when it's writing perfectly fine
-            // to its logfile.
-            //Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
+            Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
             Console.ResetColor();
             
             var logger = LogManager.GetLogger(this.GetType());
