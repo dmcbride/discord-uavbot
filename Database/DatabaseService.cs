@@ -13,10 +13,21 @@ namespace uav.Database
         private string connectionString = Environment.GetEnvironmentVariable("uav_dbConnection");
         private MySqlConnection Connect => new MySqlConnection(connectionString);
 
-        public async Task AddArkValue(ArkValue v)
+        public async Task<(int atThisCredit, int inTier)> AddArkValue(ArkValue v, double tierMin, double tierMax)
         {
             using var connection = Connect;
             await connection.ExecuteAsync(@"INSERT INTO ark_value (reporter, gv, base_credits) VALUES (@Reporter, @Gv, @BaseCredits)", v);
+
+            // find out how many we have now.
+            var parameters = new {v.BaseCredits};
+            var atThisCredit = await connection.QueryAsync<int>(
+                @"SELECT COUNT(*) FROM ark_value WHERE base_credits = @BaseCredits",
+                parameters
+            );
+
+            var inTier = await CountInRange(tierMin, tierMax);
+
+            return (atThisCredit.Single(), inTier);
         }
 
         public async Task<int> CountInRange(double gvMin, double gvMax)

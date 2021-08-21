@@ -138,10 +138,11 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                     Gv = gvValue,
                     Reporter = Context.User.ToString()
                 };
-                await databaseService.AddArkValue(value);
+                var (min, max) = creditService.TierRange(gvValue);
+                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);
 
                 // send back private reply
-                await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {DualString(gvValue)} gives base credits of {credits}");
+                await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {DualString(gvValue)} gives base credits of {credits}. There are now {inTier} report(s) in this tier and {atThisCredit} report(s) for this base credit value.");
             }
             catch (System.Exception e)
             {
