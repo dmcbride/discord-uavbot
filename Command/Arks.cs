@@ -61,8 +61,8 @@ namespace uav.Command
             // here we're assuming that you get about 6 cash arks per hour (6 minutes per ark, 10 arks per hour, 60% cash)
             var hours = Math.Floor(arks / 6);
 
-            // and then if we got that many arks in that time, we should get about 40/60 of that in DM.
-            var dm = Math.Floor(arks * 40 / 60);
+            // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
+            var dm = Math.Floor(arks * 30 / 70);
 
             return ReplyAsync(
                 $@"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)} starting with cash-on-hand of {DualString(cashValue)}, you need {arks} {Emoji.boostcashwindfall} arks.
