@@ -9,10 +9,10 @@ using uav.Attributes;
 
 namespace uav.Command
 {
-    public class UavHelp : ModuleBase<SocketCommandContext>
+    public class UavHelp : CommandBase
     {
         public static readonly string CommandChar = "!";
-        private static Dictionary<string, (string Usage, string Summary)> AllCommands = typeof(UavHelp).Assembly
+        private static Dictionary<string, (string Usage, string Summary, RequiredRoleAttribute[] RolesRequired)> AllCommands = typeof(UavHelp).Assembly
             .GetTypes()
             .Where(typeof(ModuleBase<SocketCommandContext>).IsAssignableFrom)
             .SelectMany(t => t.GetMethods())
@@ -26,18 +26,20 @@ namespace uav.Command
             return command.Text;
         }
 
-        private static (string Summary, string Usage) CommandHelp(MethodInfo m)
+        private static (string Summary, string Usage, RequiredRoleAttribute[] RequiredRoles) CommandHelp(MethodInfo m)
         {
             var summary = m.GetCustomAttribute<SummaryAttribute>();
             var usage = m.GetCustomAttribute<UsageAttribute>();
-            return (summary?.Text ?? string.Empty, usage?.Usage ?? string.Empty);
+            var rolesRequired = m.GetCustomAttributes<RequiredRoleAttribute>().ToArray();
+            return (summary?.Text ?? string.Empty, usage?.Usage ?? string.Empty, rolesRequired);
         }
 
-        private static string HelpText =
-            string.Join("\n", AllCommands.Keys.OrderBy(k => k)
-            .SelectMany(key => new[] {
-            @$"{CommandChar}{key}: {AllCommands[key].Usage}",
-            $"    Usage: `{CommandChar}{key} {AllCommands[key].Summary}`"}));
+        private string HelpText =>
+            string.Join("\n", AllCommands.OrderBy(kv => kv.Key)
+            .Where(kv => kv.Value.RolesRequired.All(r => r.IsAcceptable(Context.User)))
+            .SelectMany(kv => new[] {
+            @$"{CommandChar}{kv.Key}: {kv.Value.Usage}",
+            $"    Usage: `{CommandChar}{kv.Key} {kv.Value.Summary}`"}));
 
 
         [Command("uav")]

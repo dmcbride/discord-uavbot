@@ -13,7 +13,7 @@ using uav.Models;
 
 namespace uav.Command
 {
-    public class Arks : ModuleBase<SocketCommandContext>
+    public class Arks : CommandBase
     {
         private readonly Credits creditService = new Credits();
         private readonly DatabaseService databaseService = new DatabaseService();
@@ -26,6 +26,10 @@ namespace uav.Command
 
             return arks;
         }
+
+        private const double cashArkChance = .7d;
+        private const double dmArkChance = 1 - cashArkChance;
+        private const double arksPerHour = 10d;
 
         [Command("ark")]
         [Summary("Given your current GV, and your target GV, and cash-on-hand, how many cash arks it will take to reach your goal.")]
@@ -58,15 +62,15 @@ namespace uav.Command
 
             var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
 
-            // here we're assuming that you get about 6 cash arks per hour (6 minutes per ark, 10 arks per hour, 60% cash)
-            var hours = Math.Floor(arks / 6);
+            // here we're assuming that you get about 7 cash arks per hour (6 minutes per ark, 10 arks per hour, 70% cash)
+            var hours = Math.Floor(arks / (cashArkChance * arksPerHour));
 
             // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
-            var dm = Math.Floor(arks * 30 / 70);
+            var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
             return ReplyAsync(
                 $@"To get to a GV of {DualString(goalGvValue)} from {DualString(gvValue)} starting with cash-on-hand of {DualString(cashValue)}, you need {arks} {Emoji.boostcashwindfall} arks.
-At about 6 {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
+At about {arksPerHour * cashArkChance} {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
 During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} arks, for a total of {5 * dm} {uav.Constants.Emoji.ipmdm}.");
         }
 
@@ -139,7 +143,7 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                     Reporter = Context.User.ToString()
                 };
                 var (min, max) = creditService.TierRange(gvValue);
-                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);
+                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);                
 
                 // send back private reply
                 await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {DualString(gvValue)} gives base credits of {credits}. There are now {inTier} report(s) in this tier and {atThisCredit} report(s) for this base credit value.");
