@@ -12,4 +12,8 @@
     <PackageReference Include="MySql.Data" Version="8.0.26" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\uav.logic\uav.logic.csproj" />
+  </ItemGroup>
+
 </Project>

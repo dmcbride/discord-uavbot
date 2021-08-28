@@ -1,4 +1,4 @@
-namespace uav.Extensions
+namespace uav.logic.Extensions
 {
     public static class StringExtensions
     {

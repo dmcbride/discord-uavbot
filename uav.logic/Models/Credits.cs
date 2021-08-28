@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
-namespace uav.Models
+namespace uav.logic.Models
 {
-    class Credits
+    public class Credits
     {
         private const int MaxTier = 100 - 7; // from 1E7 to 1E100
         private static int[] prestigeTierValueBase = new int[MaxTier + 1];

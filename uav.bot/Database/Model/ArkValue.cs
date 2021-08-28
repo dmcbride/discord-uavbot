@@ -1,4 +1,5 @@
 using System;
+using uav.logic.Models;
 
 namespace uav.Database.Model
 {
