@@ -6,10 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.90" />
     <PackageReference Include="Discord.NET" Version="2.4.0" />
     <PackageReference Include="Log4NET" Version="2.0.12" />
-    <PackageReference Include="MySql.Data" Version="8.0.26" />
   </ItemGroup>
 
   <ItemGroup>
