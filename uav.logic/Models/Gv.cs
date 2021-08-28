@@ -101,5 +101,7 @@ namespace uav.logic.Models
         }
 
         public static implicit operator double(GV gv) => gv.gv;
+
+        public int CreditTier() => (int)Math.Floor(Math.Log10(gv)) - 7;
    }
 }

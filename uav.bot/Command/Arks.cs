@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using uav.Attributes;
 using uav.Constants;
-using uav.Database;
-using uav.Database.Model;
+using uav.logic.Database;
+using uav.logic.Database.Model;
 using uav.logic.Models;
 
 namespace uav.Command
@@ -109,7 +109,7 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             }
 
             var expectedMinimumCredits = creditService.TierCredits(gvValue);
-            var expectedMaximumCredits = creditService.TierCredits(gvValue * 10);
+            var expectedMaximumCredits = creditService.TierCredits(gvValue, 1);
             if (credits == null)
             {
                 var (lower,upper) = creditService.TierRange(gvValue);

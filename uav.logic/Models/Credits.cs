@@ -7,7 +7,6 @@ namespace uav.logic.Models
     {
         private const int MaxTier = 100 - 7; // from 1E7 to 1E100
         private static int[] prestigeTierValueBase = new int[MaxTier + 1];
-        private static int TierFor(double gv) => (int)Math.Floor(Math.Log10(gv)) - 7;
 
         static Credits()
         {
@@ -26,9 +25,9 @@ namespace uav.logic.Models
             return (Math.Pow(10, tier), Math.Pow(10, upperTier));
         }
 
-        public int TierCredits(double gv)
+        public int TierCredits(GV gv, int offset = 0)
         {
-            var tier = TierFor(gv);
+            var tier = gv.CreditTier() + offset;
             if (tier > MaxTier)
             {
                 tier = MaxTier;

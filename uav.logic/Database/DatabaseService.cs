@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using MySql.Data.MySqlClient;
-using uav.Database.Model;
+using uav.logic.Database.Model;
 
-namespace uav.Database
+namespace uav.logic.Database
 {
     public class DatabaseService
     {

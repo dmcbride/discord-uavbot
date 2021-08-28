@@ -1,7 +1,6 @@
 using System;
-using uav.logic.Models;
 
-namespace uav.Database.Model
+namespace uav.logic.Database.Model
 {
     public class ArkValue
     {
