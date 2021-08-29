@@ -30,7 +30,7 @@ namespace uav.Command
         [Command("ark")]
         [Summary("Given your current GV, and your target GV, and cash-on-hand, how many cash arks it will take to reach your goal.")]
         [Usage("currentGV goalGV [cashOnHand]")]
-        public Task Ark(string gv, string goalGv, string cash = null)
+        public async Task Ark(string gv, string goalGv, string cash = null)
         {
             cash ??= gv;
 
@@ -38,22 +38,26 @@ namespace uav.Command
                 !GV.TryFromString(goalGv, out var goalGvValue, out error) ||
                 !GV.TryFromString(cash, out var cashValue, out error))
             {
-                return ReplyAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}");
+                await ReplyAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}");
+                return;
             }
 
             if (goalGvValue < gvValue)
             {
-                return ReplyAsync($"Your goal is already reached. Perhaps you meant to reverse them?");
+                await ReplyAsync($"Your goal is already reached. Perhaps you meant to reverse them?");
+                return;
             }
 
             if (cashValue > gvValue)
             {
-                return ReplyAsync($"Your cash on hand is more than your current GV, that's probably wrong.");
+                await ReplyAsync($"Your cash on hand is more than your current GV, that's probably wrong.");
+                return;
             }
 
             if (cashValue < gvValue * 0.54)
             {
-                return ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {Emoji.itemTP} and {Emoji.itemFR} first.");
+                await ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {Emoji.itemTP} and {Emoji.itemFR} first.");
+                return;
             }
 
             var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
@@ -64,7 +68,7 @@ namespace uav.Command
             // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
             var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
-            return ReplyAsync(
+            await ReplyAsync(
                 $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {Emoji.boostcashwindfall} arks.
 At about {arksPerHour * cashArkChance} {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
 During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} arks, for a total of {5 * dm} {uav.Constants.Emoji.ipmdm}.");
@@ -129,7 +133,6 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                 return;
             }
 
-            var channel = await Context.User.GetOrCreateDMChannelAsync();
             try
             {
                 var value = new ArkValue
@@ -141,8 +144,8 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                 var (min, max) = creditService.TierRange(gvValue);
                 var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);                
 
-                // send back private reply
-                await channel.SendMessageAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {gvValue} gives base credits of {credits}. There are now {inTier} report(s) in this tier and {atThisCredit} report(s) for this base credit value.");
+                await ReplyAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {gvValue} gives base credits of {credits}. There are now {inTier} report(s) in this tier and {atThisCredit} report(s) for this base credit value.");
+                return;
             }
             catch (System.Exception e)
             {

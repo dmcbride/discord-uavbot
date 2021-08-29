@@ -68,6 +68,7 @@ namespace uav.logic.Models
             {
                 qty = Double.Parse(m.Groups["qty"].Value);
                 qty *= Math.Pow(10d, Double.Parse(m.Groups["exp"].Value));
+                gv = new GV(qty);
                 return true;
             }
             return false;

@@ -1,10 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Discord.WebSocket;
 using uav.Attributes;
 
 namespace uav.Command
@@ -44,10 +42,9 @@ namespace uav.Command
 
         [Command("uav")]
         [Summary("List UAV commands")]
-        public async Task Help()
+        public Task Help()
         {
-            var channel = await Context.User.GetOrCreateDMChannelAsync();
-            await channel.SendMessageAsync(HelpText);
+            return ReplyAsDMAsync(HelpText);
         }
 
     }
