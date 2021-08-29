@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Dapper;
 using MySql.Data.MySqlClient;
 using uav.logic.Database.Model;
+using uav.logic.Models;
 
 namespace uav.logic.Database
 {
@@ -58,9 +59,25 @@ namespace uav.logic.Database
                      )", new { v }
             );
 
-            
-
             return values.OrderBy(v => v.Gv);
+        }
+
+        public async Task<IEnumerable<ArkValue>> FindOutOfRange()
+        {
+            using var connection = Connect;
+
+            var credits = new Credits();
+
+            var queries = credits.AllTiers().Select((t, i) =>
+                $"(gv >= {t.gvMin} AND gv < {t.gvMax} AND (base_credits < {t.creditMin} OR base_credits > {t.creditMax}))"
+            );
+
+            var sql = $"SELECT * FROM ark_value WHERE {string.Join(" OR ", queries)}";
+            Console.WriteLine(sql);
+
+            var values = await connection.QueryAsync<ArkValue>(sql);
+
+            return values;
         }
     }
 }

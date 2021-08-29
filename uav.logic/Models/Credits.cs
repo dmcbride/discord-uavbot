@@ -1,11 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace uav.logic.Models
 {
     public class Credits
     {
-        private const int MaxTier = 100 - 7; // from 1E7 to 1E100
+        private const int TierOffset = 7; // 10m
+        private const int MaxTier = 100 - TierOffset; // from 1E7 to 1E100
         private static int[] prestigeTierValueBase = new int[MaxTier + 1];
 
         static Credits()
@@ -34,6 +36,19 @@ namespace uav.logic.Models
             }
             return prestigeTierValueBase[tier];
         }
+
+        public IEnumerable<(int tier, double gvMin, double gvMax, int creditMin, int creditMax)> AllTiers()
+        {
+            foreach (var tier in Enumerable.Range(1, MaxTier - 1))
+            {
+                var nextTier = Math.Min(tier + TierOffset, MaxTier);
+                var gvMin = Math.Pow(10, tier + TierOffset);
+                var gvMax = Math.Pow(10, nextTier);
+                yield return (tier, gvMin, gvMax, prestigeTierValueBase[tier], prestigeTierValueBase[nextTier]);
+            }
+        }
+
+
         // public int CreditsFor(double gv)
         // {
         //     var tier = TierFor(gv);
