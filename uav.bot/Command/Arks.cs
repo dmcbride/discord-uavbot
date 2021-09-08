@@ -118,10 +118,10 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             {
                 var (lower,upper) = creditService.TierRange(gvValue);
                 var totalDatapoints = await databaseService.CountInRange(lower, upper);
-                var msg = $"This tier's base credits range is {expectedMinimumCredits} through {expectedMaximumCredits - 1}. In this range, we have {totalDatapoints} data point(s).";
+                var msg = $"This tier's base {Emoji.itemCredits} range is {expectedMinimumCredits} {Emoji.itemCredits} through {expectedMaximumCredits - 1} {Emoji.itemCredits}. In this range, we have {totalDatapoints} data point(s).";
                 if (expectedMinimumCredits == expectedMaximumCredits)
                 {
-                    msg = $"This is the max tier, with credits of {expectedMaximumCredits}";
+                    msg = $"This is the max {Emoji.itemCredits} payout tier, with credits of {expectedMaximumCredits} {Emoji.itemCredits}";
                 }
                 await ReplyAsync(msg);
                 return;
