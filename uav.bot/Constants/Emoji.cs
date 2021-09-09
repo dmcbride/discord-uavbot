@@ -9,5 +9,8 @@ namespace uav.Constants
         public static readonly string itemFR = "<:itemFR:827666112022839318>";
 
         public static readonly string itemCredits = "<:ipmCredits:530812982004023306>";
+        public static readonly string partying_face = "🥳";
+        public static readonly string tada = "🎉";
+
     }
 }

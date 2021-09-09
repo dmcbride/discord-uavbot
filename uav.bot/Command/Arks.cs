@@ -95,6 +95,22 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls. This may cost up to {dmRequired} {uav.Constants.Emoji.ipmdm}");
         }
 
+        private Random rng = new Random();
+        private readonly static string[] thankYous = new[] {
+            "Thank you for feeding the algorithm.",
+            "Om nom nom.",
+            "Yesssss!",
+            "Awesome!",
+            "That's gonna help, for sure!",
+            "Nice!",
+            "Bonus!",
+            "Great job!",
+            "Informative!",
+            "Wowzers!",
+            $"{Emoji.partying_face}{Emoji.partying_face}{Emoji.partying_face}",
+            $"{Emoji.tada}",
+        };
+
         [Command("basecred")]
         [Summary("Tell UAV about the base credits you get for your current GV, or query the range allowed for that GV tier.")]
         [Usage("currentGV [baseCredits]")]
@@ -144,7 +160,8 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                 var (min, max) = creditService.TierRange(gvValue);
                 var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);                
 
-                await ReplyAsync($"Thank you for feeding the algorithm.  Recorded that your current GV of {gvValue} gives base credits of {credits}. There are now {inTier} report(s) in this tier and {atThisCredit} report(s) for this base credit value.");
+                await ReplyAsync($"{thankYous[(int)(rng.NextDouble() * thankYous.Length)]}  Recorded that your current GV of **{gvValue}** gives base credits of **{credits}**. There are now **{inTier}** report(s) in this tier and **{atThisCredit}** report(s) for this base credit value.");
+
                 return;
             }
             catch (System.Exception e)
