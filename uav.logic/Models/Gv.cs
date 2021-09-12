@@ -73,6 +73,8 @@ namespace uav.logic.Models
             }
             return false;
         }
+
+        public int TierNumber => (int)Math.Floor(Math.Log10(gv)) - 6;
   
         private (string letter, string exp) ToStrings(double qty)
         {

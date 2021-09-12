@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Discord.Commands;
 using uav.Attributes;
-using uav.Constants;
+using uav.logic.Constants;
 using uav.logic.Database;
 using uav.logic.Database.Model;
+using uav.logic.Extensions;
 using uav.logic.Models;
+using uav.logic.Service;
 
 namespace uav.Command
 {
@@ -13,6 +17,7 @@ namespace uav.Command
     {
         private readonly Credits creditService = new Credits();
         private readonly DatabaseService databaseService = new DatabaseService();
+        private readonly Ark arkService = new Ark();
 
         public double ArkCalculate(double gv, double goalGv, double cash, double exponent)
         {
@@ -71,7 +76,7 @@ namespace uav.Command
             await ReplyAsync(
                 $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {Emoji.boostcashwindfall} arks.
 At about {arksPerHour * cashArkChance} {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
-During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} arks, for a total of {5 * dm} {uav.Constants.Emoji.ipmdm}.");
+During this time, you can expect to get about {dm} {Emoji.ipmdm} arks, for a total of {5 * dm} {Emoji.ipmdm}.");
         }
 
         [Command("cw")]
@@ -92,47 +97,22 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
 
             var cws = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
             var dmRequired = cws * 30;
-            return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls. This may cost up to {dmRequired} {uav.Constants.Emoji.ipmdm}");
+            return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls. This may cost up to {dmRequired} {Emoji.ipmdm}");
         }
-
-        private Random rng = new Random();
-        private readonly static string[] thankYous = new[] {
-            "Thank you for feeding the algorithm.",
-            "Om nom nom.",
-            "Yesssss!",
-            "Awesome!",
-            "That's gonna help, for sure!",
-            "Nice!",
-            "Bonus!",
-            "Great job!",
-            "Informative!",
-            "Wowzers!",
-            $"{Emoji.partying_face}{Emoji.partying_face}{Emoji.partying_face}",
-            $"{Emoji.tada}",
-            $"Holy pretzel!",
-            "Well, I'll be jitterbugged.",
-            "Jiminy Crickets.",
-            "Gadzooks!",
-            "Zowie!",
-            "Olé!",
-            "Ho-ho!",
-            "Hurrah!",
-            "Va-va-voom!",
-            "Whoopee!",
-            "W00t!",
-            "Yee-haw!",
-            "Yippee!",
-        };
 
         [Command("basecred")]
         [Summary("Tell UAV about the base credits you get for your current GV, or query the range allowed for that GV tier.")]
-        [Usage("currentGV [baseCredits]")]
-        public async Task BaseCredits(string gv, int? credits = null)
+        [Usage("currentGV [baseCredits [gv2 credits2] ...] ")]
+        public async Task BaseCredits(params string[] parameters)
         {
-            if (!GV.TryFromString(gv, out var gvValue, out var error))
+            GV gvValue;
             {
-                await ReplyAsync($"Invalid input. Usage: `!basecred currentGV baseCredits`{(error != null ? $"\n{error}" : string.Empty)}");
-                return;
+                string error = null;
+                if (parameters.Length == 0 || !GV.TryFromString(parameters[0], out gvValue, out error))
+                {
+                    await ReplyAsync($"Invalid input. Usage: `!basecred currentGV baseCredits`{(error != null ? $"\n{error}" : string.Empty)}");
+                    return;
+                }
             }
 
             if (gvValue < 10_000_000 || gvValue > 1e100)
@@ -141,45 +121,47 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
                 return;
             }
 
-            var expectedMinimumCredits = creditService.TierCredits(gvValue);
-            var expectedMaximumCredits = creditService.TierCredits(gvValue, 1);
-            if (credits == null)
+            if (parameters.Length == 1)
             {
-                var (lower,upper) = creditService.TierRange(gvValue);
-                var totalDatapoints = await databaseService.CountInRange(lower, upper);
-                var msg = $"This tier's base {Emoji.itemCredits} range is {expectedMinimumCredits} {Emoji.itemCredits} through {expectedMaximumCredits - 1} {Emoji.itemCredits}. In this range, we have {totalDatapoints} data point(s).";
-                if (expectedMinimumCredits == expectedMaximumCredits)
-                {
-                    msg = $"This is the max {Emoji.itemCredits} payout tier, with credits of {expectedMaximumCredits} {Emoji.itemCredits}";
-                }
+                var msg = await arkService.QueryCreditRange(gvValue);
+
                 await ReplyAsync(msg);
                 return;
             }
 
-            if (credits < expectedMinimumCredits || expectedMaximumCredits < credits)
+            if (parameters.Length % 2 != 0)
             {
-                await ReplyAsync($"The given credits of {credits} lies outside the expected range for this tier of {expectedMinimumCredits} - {expectedMaximumCredits}. If this is incorrect, please send a screen-cap to Tanktalus showing this.");
+                await ReplyAsync("When entering more than one set of credits, you have to provide an even number of parameters as GV and base-credit pairs.");
                 return;
             }
 
-            try
+            var messages = parameters.NAtATime(2)
+                .SelectAsync(a => arkService.UpdateCredits(a[0], a[1], Context.User.ToString()));
+            var sb = new StringBuilder();
+            var savedAny = false;
+            await foreach (var msg in messages)
             {
-                var value = new ArkValue
+                sb.AppendLine(msg.message);
+                savedAny = savedAny || msg.success;
+            }
+
+            if (sb.Length > 0)
+            {
+                if (savedAny)
                 {
-                    BaseCredits = credits.Value,
-                    Gv = gvValue,
-                    Reporter = Context.User.ToString()
-                };
-                var (min, max) = creditService.TierRange(gvValue);
-                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);                
+                    var contributionCount = await databaseService.CountByUser(Context.User.ToString());
+                    if (contributionCount.total == 1)
+                    {
+                        sb.AppendLine($"Thank you for your very first contribution!");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"You have now contributed **{contributionCount.total}** data point(s), **{contributionCount.distinctBaseCredits}** different base credits, across **{contributionCount.distinctTiers}** tiers.");
+                    }                    
+                }
 
-                await ReplyAsync($"{thankYous[(int)(rng.NextDouble() * thankYous.Length)]}  Recorded that your current GV of **{gvValue}** gives base credits of **{credits}**. There are now **{inTier}** report(s) in this tier and **{atThisCredit}** report(s) for this base credit value.");
-
+                await ReplyAsync(sb.ToString());
                 return;
-            }
-            catch (System.Exception e)
-            {
-                Console.WriteLine(e);
             }
         }
     }

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Commands;
-using uav.Constants;
+using uav.logic.Constants;
 
 namespace uav.Command
 {

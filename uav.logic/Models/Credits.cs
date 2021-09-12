@@ -41,9 +41,9 @@ namespace uav.logic.Models
         {
             foreach (var tier in Enumerable.Range(1, MaxTier - 1))
             {
-                var nextTier = Math.Min(tier + TierOffset, MaxTier);
+                var nextTier = Math.Min(tier + 1, MaxTier);
                 var gvMin = Math.Pow(10, tier + TierOffset);
-                var gvMax = Math.Pow(10, nextTier);
+                var gvMax = Math.Pow(10, nextTier + TierOffset);
                 yield return (tier, gvMin, gvMax, prestigeTierValueBase[tier], prestigeTierValueBase[nextTier]);
             }
         }

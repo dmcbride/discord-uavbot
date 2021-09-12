@@ -17,15 +17,16 @@ namespace uav.logic.Database
         public async Task<(int atThisCredit, int inTier)> AddArkValue(ArkValue v, double tierMin, double tierMax)
         {
             using var connection = Connect;
-            await connection.ExecuteAsync(@"INSERT INTO ark_value (reporter, gv, base_credits) VALUES (@Reporter, @Gv, @BaseCredits)", v);
+            await connection.ExecuteAsync(@"INSERT INTO ark_value (reporter, gv, base_credits) VALUES (@Reporter, @Gv, @Base_Credits)", v);
 
             // find out how many we have now.
-            var parameters = new {v.BaseCredits};
+            var parameters = new {v.Base_Credits};
             var atThisCredit = await connection.QueryAsync<int>(
-                @"SELECT COUNT(*) FROM ark_value WHERE base_credits = @BaseCredits",
+                @"SELECT COUNT(*) FROM ark_value WHERE base_credits = @Base_Credits AND NOT oopsed",
                 parameters
             );
 
+            // how many in this tier
             var inTier = await CountInRange(tierMin, tierMax);
 
             return (atThisCredit.Single(), inTier);
@@ -36,7 +37,25 @@ namespace uav.logic.Database
             using var connection = Connect;
             var parameters = new {gvMin, gvMax};
             var values = await connection.QueryAsync<int>(
-                @"SELECT COUNT(*) FROM ark_value WHERE gv >= @gvMin AND gv < @gvMax AND oopsed = 0",
+                @"SELECT COUNT(*) FROM ark_value WHERE gv >= @gvMin AND gv < @gvMax AND NOT oopsed",
+                parameters
+            );
+            return values.Single();
+        }
+
+        public struct UserCounts
+        {
+            public int total;
+            public int distinctBaseCredits;
+            public int distinctTiers;
+        }
+
+        public async Task<UserCounts> CountByUser(string user)
+        {
+            using var connection = Connect;
+            var parameters = new {user};
+            var values = await connection.QueryAsync<UserCounts>(
+                @"SELECT COUNT(*) total, COUNT(distinct base_credits) distinctBaseCredits, COUNT(DISTINCT FLOOR(LOG10(gv))) distinctTiers FROM ark_value WHERE reporter = @user AND NOT oopsed",
                 parameters
             );
             return values.Single();
@@ -48,12 +67,12 @@ namespace uav.logic.Database
             var values = await connection.QueryAsync<ArkValue>(
                 @"SELECT * FROM (
                     SELECT * FROM ark_value
-                     WHERE gv < @v AND oopsed = 0
+                     WHERE gv < @v AND NOT oopsed
                      ORDER BY gv DESC
                      LIMIT 5
                   ) UNION (
                     SELECT * FROM ark_value
-                     WHERE gv > @v AND oopsed = 0
+                     WHERE gv > @v AND NOT oopsed
                      ORDER BY gv ASC
                      LIMIT 5
                      )", new { v }
@@ -65,19 +84,35 @@ namespace uav.logic.Database
         public async Task<IEnumerable<ArkValue>> FindOutOfRange()
         {
             using var connection = Connect;
-
             var credits = new Credits();
 
             var queries = credits.AllTiers().Select((t, i) =>
-                $"(gv >= {t.gvMin} AND gv < {t.gvMax} AND (base_credits < {t.creditMin} OR base_credits > {t.creditMax}))"
+                $"(base_credits = {t.creditMin} OR gv >= {t.gvMin} AND gv < {t.gvMax} AND (base_credits < {t.creditMin} OR base_credits > {t.creditMax}))"
             );
+            var where = $"WHERE NOT oopsed AND ({string.Join(" OR ", queries)})";
 
-            var sql = $"SELECT * FROM ark_value WHERE {string.Join(" OR ", queries)}";
-            Console.WriteLine(sql);
+            var sql = $"SELECT * FROM ark_value {where}";
+            //Console.WriteLine(sql);
 
             var values = await connection.QueryAsync<ArkValue>(sql);
+            await connection.ExecuteAsync($"UPDATE ark_value SET oopsed = 1 {where}");
 
             return values;
+        }
+
+        public async IAsyncEnumerable<(int tier, double minGv, int minCredit, IEnumerable<(double gv, int baseCredits)> data)> DataByTier()
+        {
+            using var connection = Connect;
+            var credits = new Credits();
+
+            foreach (var t in credits.AllTiers())
+            {
+                var values = await connection.QueryAsync<ArkValue>(
+                    $"SELECT * FROM ark_value WHERE gv >= {t.gvMin} AND gv < {t.gvMax} AND NOT oopsed"
+                );
+
+                yield return (t.tier, t.gvMin, t.creditMin, values.Select(a => (a.Gv, a.Base_Credits)));
+            }
         }
     }
 }
