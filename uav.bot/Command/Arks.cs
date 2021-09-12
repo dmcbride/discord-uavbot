@@ -109,6 +109,19 @@ During this time, you can expect to get about {dm} {uav.Constants.Emoji.ipmdm} a
             "Wowzers!",
             $"{Emoji.partying_face}{Emoji.partying_face}{Emoji.partying_face}",
             $"{Emoji.tada}",
+            $"Holy pretzel!",
+            "Well, I'll be jitterbugged.",
+            "Jiminy Crickets.",
+            "Gadzooks!",
+            "Zowie!",
+            "Olé!",
+            "Ho-ho!",
+            "Hurrah!",
+            "Va-va-voom!",
+            "Whoopee!",
+            "W00t!",
+            "Yee-haw!",
+            "Yippee!",
         };
 
         [Command("basecred")]
