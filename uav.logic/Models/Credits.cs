@@ -6,7 +6,7 @@ namespace uav.logic.Models
 {
     public class Credits
     {
-        private const int TierOffset = 7; // 10m
+        private const int TierOffset = 6; // 10m
         private const int MaxTier = 100 - TierOffset; // from 1E7 to 1E100
         private static int[] prestigeTierValueBase = new int[MaxTier + 1];
 

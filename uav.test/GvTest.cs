@@ -26,5 +26,12 @@ namespace uav.test
             Assert.IsTrue(parsed);
             StringAssert.Contains(gv.ToString(), expected);
         }
+
+        [TestMethod]
+        public void Tier()
+        {
+            GV.TryFromString("10M", out var gv, out var msg);
+            Assert.AreEqual(1, gv.TierNumber);
+        }
     }
 }

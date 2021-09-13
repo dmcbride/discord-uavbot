@@ -27,6 +27,7 @@ namespace uav.validation
             await (args[0] switch {
                 "oor" => ValidateOutOfRange(),
                 "slopes" => CalculateSlopes(),
+                "tc" => TrialCredits(),
                 _ => NotValidParam(args[0]),
             });
         }
@@ -55,17 +56,76 @@ namespace uav.validation
             await foreach (var entries in db.DataByTier())
             {
                 var data = entries.data.ToArray();
-                if (data.Length == 0)
+                if (data.Length <= 1)
                 {
                     Console.WriteLine($"Tier: {entries.tier} -- no data available");
                     continue;
                 }
 
-                var xdata = entries.minGv.AndThen(data.Select(d => d.gv)).ToArray();
-                var ydata = ((double)entries.minCredit).AndThen(data.Select(d => (double)d.baseCredits)).ToArray();
+                //var xdata = entries.minGv.AndThen(data.Select(d => d.gv)).ToArray();
+                //var ydata = ((double)entries.minCredit).AndThen(data.Select(d => (double)d.baseCredits)).ToArray();
+                var xdata = data.Select(d => d.gv).ToArray();
+                var ydata = data.Select(d => (double)d.baseCredits).ToArray();
 
                 var (b, m) = Fit.Line(xdata, ydata);
-                Console.WriteLine($"Tier {entries.tier}: {data.Length} entries: credits = {m}gv + {b}");
+                if (b > entries.minCredit)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                Console.WriteLine($"Tier {entries.tier} ({entries.minGv} = {entries.minCredit}): {data.Length} entries: credits = {m}gv + {b}");
+                Console.ResetColor();
+            }
+        }
+
+        Task TrialCredits()
+        {
+            var trials = new double[] {
+                1e7,
+                5e7,
+                9e7,
+                9.99e7,
+                1e8,
+                1.1e8,
+                1.2e8,
+                5e8,
+                9.99e8,
+                1e9,
+                1e99,
+                1.1e99,
+                1.2e99,
+                5e99,
+                9e99,
+                9.99e99,
+                1e100,
+                1e101,
+            };
+            foreach (var gv in trials)
+            {
+                Console.WriteLine($"{gv:g} gives {CalcCredit(gv)}");
+            }
+            return Task.CompletedTask;
+            
+            int CalcCredit(double gv)
+            {
+                const double maxGv = 1e100;
+
+                if (gv > maxGv)
+                {
+                    gv = maxGv;
+                }
+
+                var tier = (int) Math.Floor(Math.Log10(gv)) - 6;
+                var tierBaseGv = Math.Pow(10, tier + 6);
+                var nextTierBaseGv = Math.Pow(10, tier + 7);
+
+                var baseCreditPerTier = 10.3d;
+                var baseCredit = (int) (baseCreditPerTier * tier * (tier + 1) / 2);
+                var nextTierBaseCredit = (int) (baseCreditPerTier * (tier + 1) * (tier + 2) / 2);
+
+                var credits = baseCredit +
+                    (int)((nextTierBaseCredit - baseCredit) * .9 * (gv - tierBaseGv) / (nextTierBaseGv - tierBaseGv));
+
+                return credits;
             }
         }
     }

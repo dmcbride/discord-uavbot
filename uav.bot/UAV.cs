@@ -9,12 +9,14 @@ using log4net.Repository.Hierarchy;
 using log4net.Core;
 using log4net.Appender;
 using log4net.Config;
+using System.Linq;
 
 namespace uav
 {
     class UAV
     {
         private DiscordSocketClient _client;
+        private uav.bot.Periodic.IpmUpdate _updateChecker;
         private readonly static string secret = Environment.GetEnvironmentVariable("uav_secret");
 
         public UAV()
@@ -33,7 +35,12 @@ namespace uav
             await _client.LoginAsync(TokenType.Bot, secret);
             await _client.StartAsync();
 
+            _updateChecker = new bot.Periodic.IpmUpdate(_client);
+            _updateChecker.Start();
+
             await Task.Delay(-1);
+
+            _updateChecker.Dispose();
         }
 
         private void SetupLog4Net()
