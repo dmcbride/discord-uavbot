@@ -32,6 +32,19 @@ namespace uav.Command
         private const double dmArkChance = 1 - cashArkChance;
         private const double arksPerHour = 10d;
 
+        [Command("gv")]
+        [Summary("Converts GV between exponential and standard notations")]
+        [Usage("gv")]
+        public Task Gv(string gvInput)
+        {
+            if (!GV.TryFromString(gvInput, out var gv, out var error))
+            {
+                return ReplyAsync($"Invalid input. Usage: `!gv gv`{(error != null ? $"\n{error}" : string.Empty)}");
+            }
+
+            return ReplyAsync($"= {gv}");
+        }
+
         [Command("ark")]
         [Summary("Given your current GV, and your target GV, and cash-on-hand, how many cash arks it will take to reach your goal.")]
         [Usage("currentGV goalGV [cashOnHand]")]
