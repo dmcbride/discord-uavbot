@@ -6,11 +6,11 @@ namespace uav
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var uav = new UAV();
 
-            uav.Start(args).ConfigureAwait(false).GetAwaiter().GetResult();
+            await uav.Start(args).ConfigureAwait(false);
         }
     }
 }

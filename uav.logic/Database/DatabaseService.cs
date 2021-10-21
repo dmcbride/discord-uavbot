@@ -114,5 +114,15 @@ namespace uav.logic.Database
                 yield return (t.tier, t.gvMin, t.creditMin, values.Select(a => (a.Gv, a.Base_Credits)));
             }
         }
+
+        public async Task<IEnumerable<LatestStoreVersion>> GetLatestStoreVersions()
+        {
+            using var connection = Connect;
+            var values = await connection.QueryAsync<LatestStoreVersion>(
+                $"SELECT * FROM latest_store_versions"
+            );
+
+            return values;
+        }
     }
 }
