@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using MathNet.Numerics;
+using uav.logic.Database;
 
 namespace uav.logic.Models
 {
     public class Credits
     {
         private const int TierOffset = 6; // 10m
-        private const int MaxTier = 100 - TierOffset; // from 1E7 to 1E100
-        private static int[] prestigeTierValueBase = new int[MaxTier + 1];
+        private const int MaxTier = 104 - TierOffset; // from 1E7 to 1E104
+        private static float[] prestigeTierValueBase = new float[MaxTier + 1];
+        private DatabaseService database = new DatabaseService();
 
         static Credits()
         {
@@ -17,6 +21,16 @@ namespace uav.logic.Models
             {
                 prestigeTierValueBase[tier] = (int)Math.Round(Math.Floor(prestigeTierValueBase[tier-1] + ((tier + 1) * 10.3f)), MidpointRounding.ToEven);
             }
+            /*prestigeTierValueBase[95] *= .996f;
+            prestigeTierValueBase[96] *= .992f;
+            prestigeTierValueBase[97] *= .988f;
+            prestigeTierValueBase[98] *= .984f;
+            prestigeTierValueBase[99] *= .981f;
+            prestigeTierValueBase[100] *= .978f;
+            prestigeTierValueBase[101] *= .976f;
+            prestigeTierValueBase[102] *= .974f;
+            prestigeTierValueBase[103] *= .972f;
+            prestigeTierValueBase[104] *= .970f;*/
         }
 
         public (double gvFloor, double gvCeiling) TierRange(double gv)
@@ -30,11 +44,11 @@ namespace uav.logic.Models
         public int TierCredits(GV gv, int offset = 0)
         {
             var tier = gv.CreditTier() + offset;
-            if (tier > MaxTier)
+            if (tier >= MaxTier)
             {
-                tier = MaxTier;
+                tier = MaxTier - 1;
             }
-            return prestigeTierValueBase[tier];
+            return (int)prestigeTierValueBase[tier];
         }
 
         public IEnumerable<(int tier, double gvMin, double gvMax, int creditMin, int creditMax)> AllTiers()
@@ -44,10 +58,44 @@ namespace uav.logic.Models
                 var nextTier = Math.Min(tier + 1, MaxTier);
                 var gvMin = Math.Pow(10, tier + TierOffset);
                 var gvMax = Math.Pow(10, nextTier + TierOffset);
-                yield return (tier, gvMin, gvMax, prestigeTierValueBase[tier], prestigeTierValueBase[nextTier]);
+                yield return (tier, gvMin, gvMax, (int)prestigeTierValueBase[tier], (int)prestigeTierValueBase[nextTier]);
             }
         }
 
+        public async Task<(int credits, bool accurate)> GuessCreditsForGv(GV gv)
+        {
+            var data = (await database.GetMinMaxValuesForCredits(gv))
+                .OrderBy(d => d.gv)
+                .ToArray();
+            var (minGv, _) = gv.TierRange();
+
+            // TODO: need to improve this performance.
+            if (
+                data.Any() && (
+                    data.LastOrDefault(d => d.gv <= gv)?.base_credits == data.FirstOrDefault(d => d.gv >= gv)?.base_credits ||
+                    data.Any(d => d.gv == gv)
+                )
+            )
+            {
+                return (data.FirstOrDefault(d => d.gv >= gv)?.base_credits ?? data.Last(d => d.gv < gv).base_credits, true);
+            }
+
+            if (data.Length < 10)
+            {
+                return (-1, false);
+            }
+
+            var xdata = data.Select(d => d.gv).ToArray();
+            var ydata = data.Select(d => (double)d.base_credits).ToArray();
+
+            var (b, m) = Fit.Line(xdata, ydata);
+            if (b > minGv)
+            {
+                return (-1, false);
+            }            
+
+            return ((int) Math.Floor(m * gv + b), false);
+        }
 
         // public int CreditsFor(double gv)
         // {

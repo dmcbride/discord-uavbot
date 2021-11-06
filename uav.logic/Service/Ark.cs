@@ -19,15 +19,18 @@ namespace uav.logic.Service
             var expectedMinimumCredits = creditService.TierCredits(gv);
             var expectedMaximumCredits = creditService.TierCredits(gv, 1);
 
-            var (lower,upper) = creditService.TierRange(gv);
-            var totalDatapoints = await databaseService.CountInRange(lower, upper);
-            var msg = $"This tier's base {Emoji.ipmCredits} range is {expectedMinimumCredits} {Emoji.ipmCredits} through {expectedMaximumCredits - 1} {Emoji.ipmCredits}. In this range, we have {totalDatapoints} data point(s).";
             if (expectedMinimumCredits == expectedMaximumCredits)
             {
-                msg = $"This is the max {Emoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {Emoji.ipmCredits}";
+                return $"This is the max {Emoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {Emoji.ipmCredits}.";
             }
 
-            return msg;
+            var (lower,upper) = creditService.TierRange(gv);
+            var totalDatapoints = await databaseService.CountInRange(lower, upper);
+            var expectedCredits = await creditService.GuessCreditsForGv(gv);
+            var expectedCreditsText = expectedCredits.credits >= 10 && expectedMinimumCredits != expectedMaximumCredits ?
+                $" I would guess {(expectedCredits.accurate ? "exactly" : "approximately")} {expectedCredits.credits} {Emoji.ipmCredits} for that GV." :
+                string.Empty;
+            return $"This tier's base {Emoji.ipmCredits} range is {expectedMinimumCredits} {Emoji.ipmCredits} through {expectedMaximumCredits - 1} {Emoji.ipmCredits}. In this range, we have {totalDatapoints} data point(s).{expectedCreditsText}";
         }
 
         private static Random rng = new Random();

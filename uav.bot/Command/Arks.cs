@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.Commands;
 using uav.Attributes;
 using uav.logic.Constants;
 using uav.logic.Database;
-using uav.logic.Database.Model;
 using uav.logic.Extensions;
 using uav.logic.Models;
 using uav.logic.Service;
@@ -19,13 +17,14 @@ namespace uav.Command
         private readonly DatabaseService databaseService = new DatabaseService();
         private readonly Ark arkService = new Ark();
 
-        public double ArkCalculate(double gv, double goalGv, double cash, double exponent)
+        public (double items, GV newValue) ArkCalculate(double gv, double goalGv, double cash, double exponent)
         {
             var multiplier = (goalGv - (gv - cash)) / cash;
 
             var arks = Math.Ceiling(Math.Log(multiplier) / Math.Log(exponent));
+            var newValue = cash * Math.Pow(exponent, arks) + (gv - cash);
 
-            return arks;
+            return (arks, GV.FromNumber(newValue));
         }
 
         private const double cashArkChance = .7d;
@@ -78,17 +77,23 @@ namespace uav.Command
                 return;
             }
 
-            var arks = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
+            var (arks, newValue) = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
 
             // here we're assuming that you get about 7 cash arks per hour (6 minutes per ark, 10 arks per hour, 70% cash)
-            var hours = Math.Floor(arks / (cashArkChance * arksPerHour));
+            var minHours = Math.Floor(arks / (cashArkChance * arksPerHour));
+            var maxHours = Math.Ceiling(arks / (cashArkChance * arksPerHour));
+            var hours = minHours == maxHours 
+                ? $"{minHours} hour{(minHours == 1 ? string.Empty:"s")}"
+                : minHours == 0
+                ? $"1 hour or less"
+                : $"{minHours} - {maxHours} hours";
 
             // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
             var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
             await ReplyAsync(
-                $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {Emoji.boostcashwindfall} arks.
-At about {arksPerHour * cashArkChance} {Emoji.boostcashwindfall} arks per hour, that is about {hours} hour{(hours == 1 ? string.Empty:"s")}.
+                $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {Emoji.boostcashwindfall} arks bringing you to a GV of {newValue}.
+At about {arksPerHour * cashArkChance} {Emoji.boostcashwindfall} arks per hour, that is about {hours}.
 During this time, you can expect to get about {dm} {Emoji.ipmdm} arks, for a total of {5 * dm} {Emoji.ipmdm}.");
         }
 
@@ -108,9 +113,9 @@ During this time, you can expect to get about {dm} {Emoji.ipmdm} arks, for a tot
                 return ReplyAsync($"Your goal is already reached. Perhaps you meant to reverse them?");
             }
 
-            var cws = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
+            var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
             var dmRequired = cws * 30;
-            return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls. This may cost up to {dmRequired} {Emoji.ipmdm}");
+            return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls which will take you to {newValue}. This may cost up to {dmRequired} {Emoji.ipmdm}");
         }
 
         [Command("basecred")]
@@ -123,14 +128,14 @@ During this time, you can expect to get about {dm} {Emoji.ipmdm} arks, for a tot
                 string error = null;
                 if (parameters.Length == 0 || !GV.TryFromString(parameters[0], out gvValue, out error))
                 {
-                    await ReplyAsync($"Invalid input. Usage: `!basecred currentGV baseCredits`{(error != null ? $"\n{error}" : string.Empty)}");
+                    await ReplyAsync($"Invalid input. Usage: `!basecred currentGV [baseCredits ...]`{(error != null ? $"\n{error}" : string.Empty)}");
                     return;
                 }
             }
 
-            if (gvValue < 10_000_000 || gvValue > 1e100)
+            if (gvValue < 10_000_000 || gvValue > 1e109)
             {
-                await ReplyAsync($"Invalid input. GV must be between 10M and 1E+100");
+                await ReplyAsync($"Invalid input. GV must be between 10M and 1E+109");
                 return;
             }
 
@@ -149,7 +154,7 @@ During this time, you can expect to get about {dm} {Emoji.ipmdm} arks, for a tot
             }
 
             var messages = parameters.NAtATime(2)
-                .SelectAsync(a => arkService.UpdateCredits(a[0], a[1], Context.User.ToString()));
+                .SelectAsync(a => arkService.UpdateCredits(a[0], a[1], Context.User.ToString()));   
             var sb = new StringBuilder();
             var savedAny = false;
             await foreach (var msg in messages)

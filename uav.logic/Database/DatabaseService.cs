@@ -124,5 +124,25 @@ namespace uav.logic.Database
 
             return values;
         }
+
+        public class CreditMinMaxValues
+        {
+            public double gv;
+            public int base_credits;
+        }
+
+        public async Task<IEnumerable<CreditMinMaxValues>> GetMinMaxValuesForCredits(GV gv)
+        {
+            using var connection = Connect;
+            var (minGv, maxGv) = gv.TierRange();
+
+            var values = await connection.QueryAsync<CreditMinMaxValues>(
+                @$"SELECT min(gv) AS gv, base_credits FROM ark_value WHERE NOT oopsed AND gv >= {minGv} AND gv < {maxGv} GROUP BY base_credits
+                UNION
+                SELECT max(gv) AS gv, base_credits FROM ark_value WHERE NOT oopsed AND gv >= {minGv} AND gv < {maxGv} GROUP BY base_credits"
+            );
+
+            return values;
+        }
     }
 }

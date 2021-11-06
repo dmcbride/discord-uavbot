@@ -38,6 +38,11 @@ namespace uav.logic.Models
         private static readonly Regex SiNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)(?<suffix>[a-zA-Z]{0,2})$");
         private static readonly Regex ExpNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)[eE]\+?(?<exp>\d+)$");
 
+        public static GV FromNumber(double gv)
+        {
+            return new GV(gv);
+        }
+        
         public static bool TryFromString(string v, out GV gv, out string errorMessage)
         {
             errorMessage = null;
@@ -106,5 +111,11 @@ namespace uav.logic.Models
         public static implicit operator double(GV gv) => gv.gv;
 
         public int CreditTier() => (int)Math.Floor(Math.Log10(gv)) - 7;
+
+        public (double min, double max) TierRange()
+        {
+            var tier = Math.Floor(Math.Log10(gv));
+            return (Math.Pow(10d, tier), Math.Pow(10d, Math.Min(tier + 1, 100d)));
+        }
    }
 }
