@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -26,6 +27,16 @@ namespace uav.logic.Extensions
                     }
                 }
                 yield return a;
+            }
+        }
+
+        static Random rng = new Random();
+        public static void Shuffle<T>(this IList<T> source)
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                var swap = rng.Next(source.Count - i) + i;
+                (source[i], source[swap]) = (source[swap], source[i]);
             }
         }
     }

@@ -2,16 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.NET" Version="2.4.0" />
+    <PackageReference Include="Discord.Net.Labs" Version="3.2.0" />
     <PackageReference Include="Log4NET" Version="2.0.12" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\uav.logic\uav.logic.csproj" />
+    <ProjectReference Include="..\uav.schedule\uav.schedule.csproj" />
   </ItemGroup>
 
 </Project>

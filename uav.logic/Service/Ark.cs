@@ -21,22 +21,22 @@ namespace uav.logic.Service
 
             if (expectedMinimumCredits == expectedMaximumCredits)
             {
-                return $"This is the max {Emoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {Emoji.ipmCredits}.";
+                return $"This is the max {IpmEmoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {IpmEmoji.ipmCredits}.";
             }
 
             var (lower,upper) = creditService.TierRange(gv);
             var totalDatapoints = await databaseService.CountInRange(lower, upper);
             var expectedCredits = await creditService.GuessCreditsForGv(gv);
             var expectedCreditsText = expectedCredits.credits >= 10 && expectedMinimumCredits != expectedMaximumCredits ?
-                $" I would guess {(expectedCredits.accurate ? "exactly" : "approximately")} {expectedCredits.credits} {Emoji.ipmCredits} for that GV." :
+                $" I would guess {(expectedCredits.accurate ? "exactly" : "approximately")} {expectedCredits.credits} {IpmEmoji.ipmCredits} for that GV." :
                 string.Empty;
-            return $"This tier's base {Emoji.ipmCredits} range is {expectedMinimumCredits} {Emoji.ipmCredits} through {expectedMaximumCredits - 1} {Emoji.ipmCredits}. In this range, we have {totalDatapoints} data point(s).{expectedCreditsText}";
+            return $"This tier's base {IpmEmoji.ipmCredits} range is {expectedMinimumCredits} {IpmEmoji.ipmCredits} through {expectedMaximumCredits - 1} {IpmEmoji.ipmCredits}. In this range, we have {totalDatapoints} data point(s).{expectedCreditsText}";
         }
 
         private static Random rng = new Random();
         private readonly static string[] thankYous = new[] {
-            $"{Emoji.partying_face}{Emoji.partying_face}{Emoji.partying_face}",
-            $"{Emoji.tada}",
+            $"{IpmEmoji.partying_face}{IpmEmoji.partying_face}{IpmEmoji.partying_face}",
+            $"{IpmEmoji.tada}",
             $"Amazeballs!",
             $"Awesome!",
             $"Bonus!",

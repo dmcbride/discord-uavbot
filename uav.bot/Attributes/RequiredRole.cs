@@ -7,10 +7,10 @@ namespace uav.Attributes
 {
     public class RequiredRoleAttribute : Attribute
     {
-        private string _role;
-        public RequiredRoleAttribute(string role)
+        private ISet<string> _roles;
+        public RequiredRoleAttribute(params string[] roles)
         {
-            _role = role;
+            _roles = roles.ToHashSet();
         }
 
         public bool IsAcceptable(SocketUser socketUser)
@@ -20,7 +20,7 @@ namespace uav.Attributes
                 return false;
             }
 
-            return user.Roles.Any(r => r.Name == _role);
+            return user.Roles.Any(r => _roles.Contains(r.Name));
         }
     }
 }

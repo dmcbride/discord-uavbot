@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using uav.Attributes;
 using uav.logic.Constants;
+using uav.logic.Extensions;
+using IpmEmoji = uav.logic.Constants.IpmEmoji;
 
 namespace uav.Command
 {
-    public class Tournament : ModuleBase<SocketCommandContext>
+    public class Tournament : CommandBase
     {
         [Command("nexttourn")]
         [Summary("Tells you when the next tournament will start")]
@@ -17,15 +21,17 @@ namespace uav.Command
         {
             var now = DateTime.UtcNow;
 
-            await ReplyAsync(NextTournReply(now));
+            var embed = EmbedBuilder("Next Tournament", NextTournReply(now), Color.DarkRed);
+
+            await ReplyAsync(embed);
         }
 
         private record NextTournMessage (DayOfWeek ByEndOf, string Message, DayOfWeek? next = null);
 
         private NextTournMessage[] nextTournMessages = {
-            new (DayOfWeek.Thursday, $"The next tournamanet starts in {{0}}. Don't forget to sign up to a `!guild`! Good luck! {Emoji.four_leaf_clover}", DayOfWeek.Friday),
-            new (DayOfWeek.Friday, $"The next tournament starts in {{0}}. Oh the anticipation is killing me! Good luck! {Emoji.four_leaf_clover}"),
-            new (DayOfWeek.Saturday, $"The tournament is already going on!  You only have {{0}} left to join it! Good luck! {Emoji.four_leaf_clover}"),
+            new (DayOfWeek.Thursday, $"The next tournamanet starts in {{0}}. Don't forget to sign up to a guild! Good luck! {IpmEmoji.four_leaf_clover}", DayOfWeek.Friday),
+            new (DayOfWeek.Friday, $"The next tournament starts in {{0}}. Oh the anticipation is killing me! Good luck! {IpmEmoji.four_leaf_clover}"),
+            new (DayOfWeek.Saturday, $"The tournament is already going on!  You only have {{0}} left to join it! Good luck! {IpmEmoji.four_leaf_clover}"),
             new (DayOfWeek.Sunday, $"The tournament is going on, but you can no longer join it. The next tournament will start in {{0}}.", DayOfWeek.Friday),
         };
 
@@ -39,7 +45,8 @@ namespace uav.Command
                 daysUntil += 7;
             }
             var nextTime = now.Date.AddDays(daysUntil + 1);
-            return string.Format(msg.Message, SpanToReadable(nextTime - now));
+
+            return string.Format(msg.Message, SpanToReadable(nextTime - now)) + "\n\n" + Support.SupportStatement;
         }
 
         private record GuildMessage (DayOfWeek ByEndOf, string Message);
@@ -59,6 +66,11 @@ namespace uav.Command
         {
             var now = DateTime.UtcNow;
 
+            if (!IsInARole(Roles.Moderator, Roles.MinerMod, Roles.TraineeMod, Roles.CommunityMentor))
+            {
+                return ReplyAsync("You don't have permission to this command.");
+            }
+
             var msg = guildMessages.FirstOrDefault(m => m.ByEndOf >= now.DayOfWeek) ?? guildMessages.First();
 
             var daysUntil = msg.ByEndOf - now.DayOfWeek;
@@ -67,38 +79,26 @@ namespace uav.Command
                 daysUntil += 7;
             }
             var nextTime = now.Date.AddDays(daysUntil + 1);
-            return ReplyAsync(string.Format(msg.Message, SpanToReadable(nextTime - now)));
+
+            var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, SpanToReadable(nextTime - now)), Color.DarkGreen);
+
+            return ReplyAsync(embed);
         }
 
-        private string SpanToReadable(TimeSpan span)
+        [Command("startguild")]
+        [RequiredRole("🔸️Traineeeeeeee Miner Mod🔸️")]
+        [Usage("startguild")]
+        public Task StartGuild()
         {
-            var pieces = new List<string>();
-            if (span.Days > 0)
-            {
-                pieces.Add($"{span.Days} day{(span.Days == 1 ? string.Empty : "s")}");
-            }
-
-            if (span.Hours > 0)
-            {
-                pieces.Add($"{span.Hours} hour{(span.Hours == 1 ? string.Empty : "s")}");
-            }
-
-            if (span.Minutes > 0)
-            {
-                pieces.Add($"{span.Minutes} minute{(span.Minutes == 1 ? string.Empty : "s")}");
-            }
-
-            if (span.Seconds > 0)
-            {
-                pieces.Add($"{span.Seconds}.{span.Milliseconds:D3} second{(span.Seconds == 1 ? string.Empty : "s")}");
-            }
-
-            return pieces.Count switch {
-                0 => "no time!",
-                1 => pieces[0],
-                2 => string.Join(" and ", pieces),
-                _ => string.Join(" and ", string.Join(", ", pieces.GetRange(0, pieces.Count - 1)), pieces[^1]),
-            };
+            Task.Run(new bot.Services.Tournament(Context.Client).SelectTeams);
+            return Task.CompletedTask;
         }
+
+        private ISet<ulong> AllowedUsers = new HashSet<ulong> {
+            533601393521590272ul,
+            410138719295766537ul,
+        };
+
+        private string SpanToReadable(TimeSpan span) => uav.logic.Models.Tournament.SpanToReadable(span);
     }
 }

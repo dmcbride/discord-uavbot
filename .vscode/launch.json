@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/uav.validation/bin/Debug/net5.0/uav.validation.dll",
+            "program": "${workspaceFolder}/uav.validation/bin/Debug/net6.0/uav.validation.dll",
             "args": ["slopes"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -21,7 +21,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/uav.bot/bin/Debug/net5.0/uav.dll",
+            "program": "${workspaceFolder}/uav.bot/bin/Debug/net6.0/uav.dll",
             "args": [],
             "cwd": "${workspaceFolder}/uav.bot",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

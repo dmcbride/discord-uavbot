@@ -8,8 +8,7 @@ using log4net;
 using log4net.Repository.Hierarchy;
 using log4net.Core;
 using log4net.Appender;
-using log4net.Config;
-using System.Linq;
+using uav.Schedule;
 
 namespace uav
 {
@@ -23,7 +22,14 @@ namespace uav
         {
             SetupLog4Net();
 
-            _client = new DiscordSocketClient();
+            var config = new DiscordSocketConfig
+            {
+                //LogLevel = LogSeverity.Debug,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
+                AlwaysDownloadUsers = true,
+            };
+
+            _client = new DiscordSocketClient(config);
             _client.Log += Log;
         }
 
@@ -32,11 +38,18 @@ namespace uav
             var commandService = new CommandService();
             var handler = new Command.Handler(_client, commandService);
             await handler.InstallCommandsAsync();
+
+            var slashHandler = new SlashCommand.Handler(_client);
+            var jobScheduler = new Scheduler();
+            jobScheduler.AddJob(new bot.Jobs.Tournament(_client));
+
             await _client.LoginAsync(TokenType.Bot, secret);
             await _client.StartAsync();
 
             _updateChecker = new bot.Periodic.IpmUpdate(_client);
             _updateChecker.Start();
+
+            jobScheduler.Start();
 
             await Task.Delay(-1);
 

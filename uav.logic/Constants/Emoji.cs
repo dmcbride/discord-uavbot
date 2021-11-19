@@ -1,6 +1,6 @@
 namespace uav.logic.Constants
 {
-    public class Emoji
+    public class IpmEmoji
     {
         public static readonly string ipmdm = "<:ipmdm:628302645265956875>";
         public static readonly string four_leaf_clover = "🍀";
@@ -10,5 +10,7 @@ namespace uav.logic.Constants
         public static readonly string ipmCredits = "<:ipmCredits:530812982004023306>";
         public static readonly string partying_face = "🥳";
         public static readonly string tada = "🎉";
+        public static readonly string heart = "❤️";
+        public static readonly string ipmgalaxy = "<:ipmgalaxy:642968632049270795>";
     }
 }

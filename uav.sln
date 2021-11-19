@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uav.test", "uav.test\uav.te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uav.validation", "uav.validation\uav.validation.csproj", "{6EDD2A25-E6A0-4B8D-B786-C17A3D20AA62}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uav.schedule", "uav.schedule\uav.schedule.csproj", "{E3BA7AD9-21E5-4093-AF4D-63652286033F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{6EDD2A25-E6A0-4B8D-B786-C17A3D20AA62}.Release|x64.Build.0 = Release|Any CPU
 		{6EDD2A25-E6A0-4B8D-B786-C17A3D20AA62}.Release|x86.ActiveCfg = Release|Any CPU
 		{6EDD2A25-E6A0-4B8D-B786-C17A3D20AA62}.Release|x86.Build.0 = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|x64.Build.0 = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Debug|x86.Build.0 = Debug|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|x64.ActiveCfg = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|x64.Build.0 = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|x86.ActiveCfg = Release|Any CPU
+		{E3BA7AD9-21E5-4093-AF4D-63652286033F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
