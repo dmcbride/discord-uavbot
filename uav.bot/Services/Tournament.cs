@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
 using uav.logic.Extensions;
 using IpmEmoji = uav.logic.Constants.IpmEmoji;
@@ -54,8 +53,6 @@ public class Tournament
             return;
         }
 
-        var tax = PreparationTax();
-
         users.Shuffle();
 
         var teams = users
@@ -65,11 +62,9 @@ public class Tournament
             .ToArray();
 
         var teamsMessage = string.Join("\n\n", 
-            teams.Select((t, i) => $"Team {i+1}\n------\n{string.Join("\n", t.Select(u => $"<@{u.Id}>"))}")
+            teams.Select((t, i) => $"Team {i+1} ({t.Length})\n------\n{string.Join("\n", t.Select(u => $"<@{u.Id}>"))}")
         );
         
-        await tax;
-
         // hand out the roles.
         foreach (var (team, index) in teams.Select((t, i) => (t, i)))
         {
@@ -80,24 +75,9 @@ public class Tournament
             }
         }
 
-        var message = $"Teams are:\n\n{teamsMessage}\nBest of luck to everyone {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!";
+        var message = $"Guild Tournament teams are:\n\n{teamsMessage}\n\nBest of luck to everyone {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!";
         await channel.SendMessageAsync(message);
         await _guild.GetTextChannel(Channels.GuildRules).SendMessageAsync(message);
         await _guild.GetTextChannel(Channels.DiscordServerNews).SendMessageAsync(message);
-
-        async Task PreparationTax()
-        {
-            await channel.SendMessageAsync("Counting users...");
-            await Task.Delay(550);
-            await channel.SendMessageAsync("Sorting...");
-            await Task.Delay(450);
-            await channel.SendMessageAsync("(The anticipation is killing me!)");
-            await Task.Delay(350);
-            await channel.SendMessageAsync("Increasing quantisation of randomness....");
-            await Task.Delay(250);
-            await channel.SendMessageAsync("I think I got it. Double checking.");
-            await Task.Delay(175);
-            await channel.SendMessageAsync("Got it!");
-        }
     }
 }

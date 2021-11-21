@@ -39,7 +39,7 @@ namespace uav
             var handler = new Command.Handler(_client, commandService);
             await handler.InstallCommandsAsync();
 
-            var slashHandler = new SlashCommand.Handler(_client);
+            var slashHandler = new bot.SlashCommand.Handler(_client, GetType().Assembly);
             var jobScheduler = new Scheduler();
             jobScheduler.AddJob(new bot.Jobs.Tournament(_client));
 

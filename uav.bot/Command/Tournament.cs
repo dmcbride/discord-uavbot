@@ -46,58 +46,9 @@ namespace uav.Command
             }
             var nextTime = now.Date.AddDays(daysUntil + 1);
 
-            return string.Format(msg.Message, SpanToReadable(nextTime - now)) + "\n\n" + Support.SupportStatement;
+            return @$"Warning: The `!nexttourn` command is being replaced with `/next-tournament` and will go away. Please use `/next-tourn` in the future. {IpmEmoji.warning}\n\n" +
+                string.Format(msg.Message, SpanToReadable(nextTime - now)) + "\n\n" + Support.SupportStatement;
         }
-
-        private record GuildMessage (DayOfWeek ByEndOf, string Message);
-
-        private GuildMessage[] guildMessages = {
-            new (DayOfWeek.Monday, "Final submissions due in {0}!"),
-            new (DayOfWeek.Tuesday, "Hold on, sign up will start in {0}."),
-            new (DayOfWeek.Thursday, "Sign up now by hitting the emoji in <#900801095788527616>! Signups close in {0}!"),
-            new (DayOfWeek.Friday, "Signups are closed, hope you've signed up! Tournament will start in {0}."),
-            new (DayOfWeek.Saturday, "Tournaments have started! {0} left to start or begin your guild group."),
-        };
-
-        [Command("guild")]
-        [Summary("Tells you when the next important times are for guild-based tournaments")]
-        [Usage("guild")]
-        public Task Guild()
-        {
-            var now = DateTime.UtcNow;
-
-            if (!IsInARole(Roles.Moderator, Roles.MinerMod, Roles.TraineeMod, Roles.CommunityMentor))
-            {
-                return ReplyAsync("You don't have permission to this command.");
-            }
-
-            var msg = guildMessages.FirstOrDefault(m => m.ByEndOf >= now.DayOfWeek) ?? guildMessages.First();
-
-            var daysUntil = msg.ByEndOf - now.DayOfWeek;
-            if (daysUntil < 0)
-            {
-                daysUntil += 7;
-            }
-            var nextTime = now.Date.AddDays(daysUntil + 1);
-
-            var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, SpanToReadable(nextTime - now)), Color.DarkGreen);
-
-            return ReplyAsync(embed);
-        }
-
-        [Command("startguild")]
-        [RequiredRole("🔸️Traineeeeeeee Miner Mod🔸️")]
-        [Usage("startguild")]
-        public Task StartGuild()
-        {
-            Task.Run(new bot.Services.Tournament(Context.Client).SelectTeams);
-            return Task.CompletedTask;
-        }
-
-        private ISet<ulong> AllowedUsers = new HashSet<ulong> {
-            533601393521590272ul,
-            410138719295766537ul,
-        };
 
         private string SpanToReadable(TimeSpan span) => uav.logic.Models.Tournament.SpanToReadable(span);
     }

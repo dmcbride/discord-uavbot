@@ -92,7 +92,9 @@ namespace uav.Command
             var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
             await ReplyAsync(
-                $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {IpmEmoji.boostcashwindfall} arks bringing you to a GV of {newValue}.
+                $@"Warning: The `!ark` command is being replaced with `/ark` and will go away. Please use `/ark` in the future. {IpmEmoji.warning}
+
+To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {IpmEmoji.boostcashwindfall} arks bringing you to a GV of {newValue}.
 At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.
 During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a total of {5 * dm} {IpmEmoji.ipmdm}.");
         }
@@ -115,7 +117,9 @@ During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a 
 
             var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
             var dmRequired = cws * 30;
-            return ReplyAsync($"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}");
+            return ReplyAsync(@$"Warning: the `!cw` command is being replaced with `/cash-windfalls` and will go away. Please use `/cws` in the future. {IpmEmoji.warning}
+
+To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}");
         }
 
         [Command("basecred")]
