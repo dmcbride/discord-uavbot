@@ -47,8 +47,11 @@ public class CashWindfalls : BaseGvSlashCommand
 
         var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
         var dmRequired = cws * 30;
-        return command.RespondAsync(@$"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
+        var message = @$"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
 
-{Support.SupportStatement}");
+{Support.SupportStatement}";
+        var embed = new EmbedBuilder()
+            .WithDescription(message);
+        return command.RespondAsync(embed: embed.Build());
     }
 }

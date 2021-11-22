@@ -82,11 +82,14 @@ public class Ark : BaseGvSlashCommand
         // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
         var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
-        await command.RespondAsync(
-            $@"To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {IpmEmoji.boostcashwindfall} arks bringing you to a GV of {newValue}.
+
+        var message = $@"To get to a GV of **{goalGvValue}** from **{gvValue}** starting with cash-on-hand of **{cashValue}**, you need **{arks}** {IpmEmoji.boostcashwindfall} arks bringing you to a GV of **{newValue}**.
 At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.
 During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a total of {5 * dm} {IpmEmoji.ipmdm}.
 
-{Support.SupportStatement}");
+{Support.SupportStatement}";
+        var embed = new EmbedBuilder()
+            .WithDescription(message);
+        await command.RespondAsync(embed: embed.Build());
     }
 }
