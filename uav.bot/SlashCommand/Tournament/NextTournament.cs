@@ -23,7 +23,7 @@ public class NextTournament : BaseTournamentSlashCommand
 
     public override Task Invoke(SocketSlashCommand command)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.UtcNow;
         var msg = nextTournamentMessages.FirstOrDefault(m => m.ByEndOf >= now.DayOfWeek) ?? nextTournamentMessages.First();
 
         var daysUntil = (msg.next ?? msg.ByEndOf) - now.DayOfWeek;

@@ -31,72 +31,13 @@ namespace uav.Command
         private const double dmArkChance = 1 - cashArkChance;
         private const double arksPerHour = 10d;
 
-        [Command("gv")]
-        [Summary("Converts GV between exponential and standard notations")]
-        [Usage("gv")]
-        public Task Gv(string gvInput)
-        {
-            if (!GV.TryFromString(gvInput, out var gv, out var error))
-            {
-                return ReplyAsync($"Invalid input. Usage: `!gv gv`{(error != null ? $"\n{error}" : string.Empty)}");
-            }
-
-            return ReplyAsync($"= {gv}");
-        }
-
         [Command("ark")]
-        [Summary("Given your current GV, and your target GV, and cash-on-hand, how many cash arks it will take to reach your goal.")]
+        [Summary("Removed, replaced with /ark.")]
         [Usage("currentGV goalGV [cashOnHand]")]
         public async Task Ark(string gv, string goalGv, string cash = null)
         {
-            cash ??= gv;
-
-            if (!GV.TryFromString(gv, out var gvValue, out var error) ||
-                !GV.TryFromString(goalGv, out var goalGvValue, out error) ||
-                !GV.TryFromString(cash, out var cashValue, out error))
-            {
-                await ReplyAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}");
-                return;
-            }
-
-            if (goalGvValue < gvValue)
-            {
-                await ReplyAsync($"Your goal is already reached. Perhaps you meant to reverse them?");
-                return;
-            }
-
-            if (cashValue > gvValue)
-            {
-                await ReplyAsync($"Your cash on hand is more than your current GV, that's probably wrong.");
-                return;
-            }
-
-            if (cashValue < gvValue * 0.54)
-            {
-                await ReplyAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.");
-                return;
-            }
-
-            var (arks, newValue) = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
-
-            // here we're assuming that you get about 7 cash arks per hour (6 minutes per ark, 10 arks per hour, 70% cash)
-            var minHours = Math.Floor(arks / (cashArkChance * arksPerHour));
-            var maxHours = Math.Ceiling(arks / (cashArkChance * arksPerHour));
-            var hours = minHours == maxHours 
-                ? $"{minHours} hour{(minHours == 1 ? string.Empty:"s")}"
-                : minHours == 0
-                ? $"1 hour or less"
-                : $"{minHours} - {maxHours} hours";
-
-            // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
-            var dm = Math.Floor(arks * dmArkChance / cashArkChance);
-
-            await ReplyAsync(
-                $@"Warning: The `!ark` command is being replaced with `/ark` and will go away. Please use `/ark` in the future. {IpmEmoji.warning}
-
-To get to a GV of {goalGvValue} from {gvValue} starting with cash-on-hand of {cashValue}, you need {arks} {IpmEmoji.boostcashwindfall} arks bringing you to a GV of {newValue}.
-At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.
-During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a total of {5 * dm} {IpmEmoji.ipmdm}.");
+            await ReplyAsync("The `!ark` command has been replaced with `/ark` and has gone away. Please use `/ark`. {IpmEmoji.warning}");
+            return;
         }
 
         [Command("cw")]
@@ -117,7 +58,7 @@ During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a 
 
             var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
             var dmRequired = cws * 30;
-            return ReplyAsync(@$"Warning: the `!cw` command is being replaced with `/cash-windfalls` and will go away. Please use `/cws` in the future. {IpmEmoji.warning}
+            return ReplyAsync(@$"Warning: the `!cw` command is being replaced with `/cash-windfalls` and will go away. Please use `/cash-windfalls` in the future. {IpmEmoji.warning}
 
 To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}");
         }

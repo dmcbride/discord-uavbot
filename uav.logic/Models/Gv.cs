@@ -35,8 +35,10 @@ namespace uav.logic.Models
 
         public static IEnumerable<string> AllowedExtensions => recommendedSuffixes;
 
-        private static readonly Regex SiNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)(?<suffix>[a-zA-Z]{0,2})$");
-        private static readonly Regex ExpNumber = new Regex(@"^(?<qty>\d+(?:\.\d+)?|\.\d+)[eE]\+?(?<exp>\d+)$");
+        private static readonly Regex SiNumber = new Regex(@"^(?<qty>\d+(?:[.,]\d+)?|[.,]\d+)(?<suffix>[a-zA-Z]{0,2})$");
+        private static readonly Regex ExpNumber = new Regex(@"^(?<qty>\d+(?:[].,]\d+)?|[.,]\d+)[eE]\+?(?<exp>\d+)$");
+        private static Regex _decimalSeparator = new Regex("[,.]");
+        private static string FixComma(string s) => _decimalSeparator.Replace(s, ".");
 
         public static GV FromNumber(double gv)
         {
@@ -51,7 +53,7 @@ namespace uav.logic.Models
             gv = null;
             if (m.Success)
             {
-                qty = Double.Parse(m.Groups["qty"].Value);
+                qty = Double.Parse(FixComma(m.Groups["qty"].Value));
                 var suffix = m.Groups["suffix"].Value;
                 if (suffixExponent.TryGetValue(suffix, out var exp))
                 {
@@ -71,8 +73,8 @@ namespace uav.logic.Models
             }
             else if ((m = ExpNumber.Match(v)).Success)
             {
-                qty = Double.Parse(m.Groups["qty"].Value);
-                qty *= Math.Pow(10d, Double.Parse(m.Groups["exp"].Value));
+                qty = Double.Parse(FixComma(m.Groups["qty"].Value));
+                qty *= Math.Pow(10d, Double.Parse(FixComma(m.Groups["exp"].Value)));
                 gv = new GV(qty);
                 return true;
             }
@@ -96,7 +98,7 @@ namespace uav.logic.Models
                 letter = $"{qty / Math.Pow(1000d, powerOf1000):g5}{letterSuffix}";
             }
 
-            var exp = $"{qty / Math.Pow(10d, powerOf10):g2}E+{powerOf10}";
+            var exp = $"{qty / Math.Pow(10d, powerOf10):g3}E+{powerOf10}";
 
             return (letter, exp);
         }

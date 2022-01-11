@@ -8,14 +8,6 @@ namespace uav.Command
 {
     public class CommandBase : ModuleBase<SocketCommandContext>
     {
-        protected static class Roles
-        {
-            public static ulong Moderator = 525329208096981002ul;
-            public static ulong MinerMod = 650772364052660258ul;
-            public static ulong TraineeMod = 781882277651021834ul;
-            public static ulong CommunityMentor = 883421342760845344ul;
-        }
-
         protected bool IsInARole(params string[] requiredRoles)
         {
             if (!(Context.User is SocketGuildUser user))

@@ -22,25 +22,6 @@ public class Tournament : Job
          }
     }
 
-    private static class Channels
-    {
-        public static ulong AllTeamsRallyRoom = 899407911900573716ul;
-        public static ulong GuildRules = 900801095788527616ul;
-
-        public static ulong SubmitFinalRanksHere = 903046199765000202ul;
-        public static ulong DiscordServerNews = 909548441040986173ul;
-    }
-
-    private static class Roles
-    {
-        public static ulong GuildAccessRole = 876377705501827082ul;
-        public static ulong[] GuildTeams = new[] {
-            900814071853613068ul, // team 1
-            902712361838841936ul, // team 2
-            902712424493383740ul, // team 3
-        };
-    }
-
     private record GuildJobs(DayOfWeek Day, string Name, Func<Task> Action);
     private GuildJobs[] jobs;
 
@@ -102,6 +83,24 @@ public class Tournament : Job
             await RemoveRoleFromEveryone(teamRole);
         }
 
+        // try removing all of the extra emotes.
+        try {
+            var msg = await _guild.GetTextChannel(905379297219473418ul).GetMessageAsync(900805354408009788ul);
+            Emote.TryParse("<:tbdcapitalplanet:852848079699050527>", out var tbdcapitalplanet);
+            var userGroups  = msg.GetReactionUsersAsync(tbdcapitalplanet, int.MaxValue);
+            await foreach (var users in userGroups)
+            {
+                foreach (var user in users)
+                {
+                    if (!user.IsBot)
+                    {
+                        await msg.RemoveReactionAsync(tbdcapitalplanet, user);
+                    }
+                }
+            }
+        }
+        finally {}
+
         // and let everyone know the signup is available.
         await RegistrationMessage("Tournament Guild Registration Has Begun!");
     }
@@ -129,7 +128,6 @@ If you cannot see the channel, go to <#677924152669110292> and click on the {Ipm
             .WithColor(Color.Teal);
         
         await _guild.GetTextChannel(Channels.DiscordServerNews).SendMessageAsync(embed: embed.Build());
-
     }
 
     private async Task RemoveRoleFromEveryone(SocketRole role)
@@ -157,7 +155,7 @@ If you cannot see the channel, go to <#677924152669110292> and click on the {Ipm
     {
         var embed = new EmbedBuilder()
             .WithTitle("Guild Submissions Complete!")
-            .WithDescription("Final submissions closed. <@533601393521590272> to resolve the winner!")
+            .WithDescription("Final submissions closed. Time to resolve the winner!")
             .WithColor(Color.Green)
             .WithCurrentTimestamp();
         await _guild.GetTextChannel(Channels.SubmitFinalRanksHere).SendMessageAsync(embed: embed.Build());

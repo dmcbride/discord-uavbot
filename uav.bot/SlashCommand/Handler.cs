@@ -48,9 +48,9 @@ namespace uav.bot.SlashCommand
                 {
                     await _client.Rest.BulkOverwriteGuildCommands(commands, guild.Id);
                 }
-                catch (ApplicationCommandException exception)
+                catch (HttpException exception)
                 {
-                    var json = JsonConvert.SerializeObject(exception.Error, Formatting.Indented);
+                    var json = JsonConvert.SerializeObject(exception, Formatting.Indented);
                     Console.WriteLine(json);
                 }
             }

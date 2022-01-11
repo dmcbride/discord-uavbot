@@ -87,9 +87,9 @@ namespace uav.logic.Service
                 return ($@"Invalid GV ""{gvInput}""{(error != null ? $"\n{error}" : string.Empty)}.", false);
             }
 
-            if (gv < 10_000_000 || gv > 1e100)
+            if (gv < 10_000_000 || gv > 1e109)
             {
-                return ($@"""{gv}"" is not between 10M and 1E+100.", false);
+                return ($@"""{gv}"" is not between 10M and 1E+109.", false);
             }
 
             if (!int.TryParse(creditInput, out var credits))

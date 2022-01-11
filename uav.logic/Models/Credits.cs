@@ -10,27 +10,27 @@ namespace uav.logic.Models
     public class Credits
     {
         private const int TierOffset = 6; // 10m
-        private const int MaxTier = 104 - TierOffset; // from 1E7 to 1E104
-        private static float[] prestigeTierValueBase = new float[MaxTier + 1];
+        private const int MaxTier = 109 - TierOffset; // from 1E7 to 1E109
+        private static float[] prestigeTierValueBase = new float[MaxTier];
         private DatabaseService database = new DatabaseService();
 
         static Credits()
         {
             prestigeTierValueBase[0] = 10;
-            foreach (var tier in Enumerable.Range(1, MaxTier))
+            foreach (var tier in Enumerable.Range(1, MaxTier - 1))
             {
                 prestigeTierValueBase[tier] = (int)Math.Round(Math.Floor(prestigeTierValueBase[tier-1] + ((tier + 1) * 10.3f)), MidpointRounding.ToEven);
             }
-            /*prestigeTierValueBase[95] *= .996f;
-            prestigeTierValueBase[96] *= .992f;
-            prestigeTierValueBase[97] *= .988f;
-            prestigeTierValueBase[98] *= .984f;
-            prestigeTierValueBase[99] *= .981f;
-            prestigeTierValueBase[100] *= .978f;
-            prestigeTierValueBase[101] *= .976f;
-            prestigeTierValueBase[102] *= .974f;
-            prestigeTierValueBase[103] *= .972f;
-            prestigeTierValueBase[104] *= .970f;*/
+            prestigeTierValueBase[93] = 46666; // *= .996f; // 46666
+            prestigeTierValueBase[94] = 47458; // *= .992f; // 47458
+            prestigeTierValueBase[95] = 48253; // *= .988f; // 48253
+            prestigeTierValueBase[96] = 49046; // *= .984f; // 49046
+            prestigeTierValueBase[97] = 49895; // *= .981f; // 49895
+            prestigeTierValueBase[98] = 50007; // *= .978f; // 50007
+            prestigeTierValueBase[99] = 50913; // *= .976f; // 50913
+            prestigeTierValueBase[100] = 51824; // *= .974f; // 51824
+            prestigeTierValueBase[101] = 52741; // *= .972f; // 52741
+            prestigeTierValueBase[102] = 54505; // *= .970f; // 54505
         }
 
         public (double gvFloor, double gvCeiling) TierRange(double gv)

@@ -12,16 +12,9 @@ public class Guild : BaseSlashCommand
     public Guild()
     {
     }
-    public override string CommandName => "guild";
 
-    public override SlashCommandBuilder CommandBuilder
-    {
-        get
-        {
-            return new SlashCommandBuilder()
+    public override SlashCommandBuilder CommandBuilder => new SlashCommandBuilder()
                 .WithDescription("Get Guild-Tournament information");
-        }
-    }
 
     private record GuildMessage (DayOfWeek ByEndOf, string Message);
 

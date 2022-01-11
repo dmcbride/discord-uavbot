@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using uav.logic.Constants;
 using uav.logic.Extensions;
 using IpmEmoji = uav.logic.Constants.IpmEmoji;
 
@@ -16,25 +17,6 @@ public class Tournament
 
     private DiscordSocketClient _client { get; }
     private SocketGuild _guild => _client.GetGuild(523911528328724502ul);
-
-    private static class Channels
-    {
-        public static ulong AllTeamsRallyRoom = 899407911900573716ul;
-        public static ulong GuildRules = 900801095788527616ul;
-
-        public static ulong SubmitFinalRanksHere = 903046199765000202ul;
-        public static ulong DiscordServerNews = 909548441040986173ul;
-    }
-
-    private static class Roles
-    {
-        public static ulong GuildAccessRole = 876377705501827082ul;
-        public static ulong[] GuildTeams = new[] {
-            900814071853613068ul, // team 1
-            902712361838841936ul, // team 2
-            902712424493383740ul, // team 3
-        };
-    }
 
     public async Task SelectTeams()
     {
@@ -53,11 +35,20 @@ public class Tournament
             return;
         }
 
+        if (users.Length < 2)
+        {
+            await channel.SendMessageAsync("Not enough participants to form teams");
+        }
+
         users.Shuffle();
+
+        int maxTeams = Math.Max(2,
+            Math.Min(Roles.GuildTeams.Count, (users.Length + 4) / 5)
+        );
 
         var teams = users
             .Select((u, i) => (u, i))
-            .GroupBy(x => x.i % 3)
+            .GroupBy(x => x.i % maxTeams)
             .Select(g => g.Select(x => x.u).OrderBy(u => u.Nickname.IsNullOrEmpty() ? u.Username : u.Nickname, StringComparer.InvariantCultureIgnoreCase).ToArray())
             .ToArray();
 

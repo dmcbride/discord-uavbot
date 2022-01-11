@@ -9,14 +9,6 @@ namespace uav.bot.SlashCommand;
 
 public abstract class BaseSlashCommand : ISlashCommand
 {
-    protected static class Roles
-    {
-        public static ulong Moderator = 525329208096981002ul;
-        public static ulong MinerMod = 650772364052660258ul;
-        public static ulong HelperMod = 781882277651021834ul;
-        public static ulong CommunityMentor = 883421342760845344ul;
-    }
-
     private static Regex slashCommandDashLocator = new Regex(@"(?<=[a-z])(?=[A-Z])");
     public virtual string CommandName =>
         slashCommandDashLocator.Replace(GetType().Name, "-").ToLower();
