@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MathNet.Numerics;
 using uav.logic.Database;
@@ -28,8 +29,43 @@ namespace uav.validation
                 "oor" => ValidateOutOfRange(),
                 "slopes" => CalculateSlopes(),
                 "tc" => TrialCredits(),
+                "rx" => RegexCheck(),
                 _ => NotValidParam(args[0]),
             });
+        }
+
+        Task RegexCheck()
+        {
+            (string Name, string Pet)[] Pets = {
+                ("None", ""),
+                ("Rabbit (credit farmer)", "🐇"),
+                ("Turtle (long hauler)", "🐢"),
+                ("Dragon (tourney/challenge)", "🐲"),
+                ("Unicorn (tourney/challenge)", "🦄"),
+                ("Worm (tourney only)", "🪱"),
+                ("Whale ($$$)", "🐳"),
+                ("Robot (UAV Mod)", "🤖"),
+                ("Bat (Man)", "🦇"),
+                ("Penguin (Arms)", "🐧"),
+            };
+
+            Regex PetFinder = new Regex($"^((?:{string.Join("|",Pets.Where(p=>p.Pet.Any()).Select(p=>p.Pet))}) ?)?");
+
+            var realNick = "🪱 D★nger *³²²^²¹¹ 💫";
+            var realChangedNick = PetFinder.Replace(realNick, Pets[1].Pet);
+
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            Console.WriteLine($"Renaming {realNick} to {realChangedNick}:\n[{string.Join(",", realNick.Select(c => $"{c}:{(int)c:x}"))}]\n[{string.Join(",", realChangedNick.Select(c => $"{c}:{(int)c:x}"))}]");
+
+            string superscripts = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+            char turtlePrefix = '^';
+            char rabbitPrefix = '*';
+
+            var rx = $" ?[{superscripts}{turtlePrefix}{rabbitPrefix}]+(?=\\s*[^{superscripts}{turtlePrefix}{rabbitPrefix}]*?$)";
+            var findSuper = Regex.Replace(realNick, rx, "---");
+            Console.WriteLine($"No superscripts: {findSuper}");
+
+            return Task.CompletedTask;
         }
 
         Task NotValidParam(string p)

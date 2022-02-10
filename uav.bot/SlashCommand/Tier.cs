@@ -24,6 +24,6 @@ public class Tier : BaseSlashCommand
     {
         var tierNumber = ((long)command.Data.Options.First().Value);
         var gv = GV.FromNumber(Math.Pow(10d, tierNumber + 6));
-        await command.RespondAsync($"Tier {tierNumber} starts at {gv}.");
+        await RespondAsync($"Tier {tierNumber} starts at {gv}.");
     }
 }

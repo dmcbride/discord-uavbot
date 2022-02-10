@@ -11,6 +11,11 @@ namespace uav.logic.Extensions
             return new[] {source}.Concat(next);
         }
 
+        public static IEnumerable<T> AndThen<T>(this T source, params T[] next) => source.AndThen((IEnumerable<T>)next);
+
+        public static IEnumerable<T> AndThen<T>(this IEnumerable<T> source, params T[] next) => source.Concat(next);
+        public static IEnumerable<T> AndThen<T>(this IEnumerable<T> source, IEnumerable<T> next) => source.Concat(next);
+
         public static IEnumerable<IList<T>> NAtATime<T>(this IEnumerable<T> source, int n)
         {
             using var it = source.GetEnumerator();

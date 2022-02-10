@@ -21,14 +21,14 @@ namespace uav.logic.Service
 
             if (expectedMinimumCredits == expectedMaximumCredits)
             {
-                return $"This is the max {IpmEmoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {IpmEmoji.ipmCredits}.";
+                return $"{gv} is the max {IpmEmoji.ipmCredits} tier, with credits of {expectedMaximumCredits} {IpmEmoji.ipmCredits}.";
             }
 
             var (lower,upper) = creditService.TierRange(gv);
             var totalDatapoints = await databaseService.CountInRange(lower, upper);
             var expectedCredits = await creditService.GuessCreditsForGv(gv);
             var expectedCreditsText = expectedCredits.credits >= 10 && expectedMinimumCredits != expectedMaximumCredits ?
-                $" I would guess {(expectedCredits.accurate ? "exactly" : "approximately")} {expectedCredits.credits} {IpmEmoji.ipmCredits} for that GV." :
+                $" A GV of {gv} would get {(expectedCredits.accurate ? "exactly" : "approximately")} {expectedCredits.credits} {IpmEmoji.ipmCredits}." :
                 string.Empty;
             return $"This tier's base {IpmEmoji.ipmCredits} range is {expectedMinimumCredits} {IpmEmoji.ipmCredits} through {expectedMaximumCredits - 1} {IpmEmoji.ipmCredits}. In this range, we have {totalDatapoints} data point(s).{expectedCreditsText}";
         }
@@ -80,6 +80,16 @@ namespace uav.logic.Service
 
         public async Task<(string message, bool success)> UpdateCredits(string gvInput, string creditInput, string user)
         {
+            if (!int.TryParse(creditInput, out var credits))
+            {
+                return ($@"Credit value of ""{creditInput}"" provided for GV ""{gvInput}"" isn't a number - did you put a GV value instead?", false);
+            }
+
+            return await UpdateCredits(gvInput, credits, user);
+        }
+
+        public async Task<(string message, bool success)> UpdateCredits(string gvInput, int credits, string user)
+        {
             var creditService = new Credits();
 
             if (!GV.TryFromString(gvInput, out var gv, out var error))
@@ -90,11 +100,6 @@ namespace uav.logic.Service
             if (gv < 10_000_000 || gv > 1e109)
             {
                 return ($@"""{gv}"" is not between 10M and 1E+109.", false);
-            }
-
-            if (!int.TryParse(creditInput, out var credits))
-            {
-                return ($@"Credit value of ""{creditInput}"" provided for GV ""{gv}"" isn't a number - did you put a GV value instead?", false);
             }
 
             var expectedMinimumCredits = creditService.TierCredits(gv);

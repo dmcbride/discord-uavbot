@@ -37,12 +37,12 @@ public class CashWindfalls : BaseGvSlashCommand
         if (!GV.TryFromString(gv, out var gvValue, out var error) ||
             !GV.TryFromString(goalGv, out var goalGvValue, out error))
         {
-            return command.RespondAsync($"Invalid input. Usage: `!cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
+            return RespondAsync($"Invalid input. Usage: `!cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
         }
 
         if (goalGvValue < gvValue)
         {
-            return command.RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
+            return RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
         }
 
         var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
@@ -52,6 +52,6 @@ public class CashWindfalls : BaseGvSlashCommand
 {Support.SupportStatement}";
         var embed = new EmbedBuilder()
             .WithDescription(message);
-        return command.RespondAsync(embed: embed.Build());
+        return RespondAsync(embed: embed.Build());
     }
 }

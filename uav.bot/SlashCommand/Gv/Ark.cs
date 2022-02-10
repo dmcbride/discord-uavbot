@@ -46,25 +46,25 @@ public class Ark : BaseGvSlashCommand
             !GV.TryFromString(goalGv, out var goalGvValue, out error) ||
             !GV.TryFromString(cash, out var cashValue, out error))
         {
-            await command.RespondAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
+            await RespondAsync($"Invalid input.  Usage: `!ark currentGV goalGV cashOnHand`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
             return;
         }
 
         if (goalGvValue < gvValue)
         {
-            await command.RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
+            await RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
             return;
         }
 
         if (cashValue > gvValue)
         {
-            await command.RespondAsync($"Your cash on hand ({cash}) is more than your current GV ({gv}), that's probably wrong.", ephemeral: true);
+            await RespondAsync($"Your cash on hand ({cash}) is more than your current GV ({gv}), that's probably wrong.", ephemeral: true);
             return;
         }
 
         if (cashValue < gvValue * 0.54)
         {
-            await command.RespondAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.", ephemeral: true);
+            await RespondAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.", ephemeral: true);
             return;
         }
 
@@ -90,6 +90,6 @@ During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a 
 {Support.SupportStatement}";
         var embed = new EmbedBuilder()
             .WithDescription(message);
-        await command.RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build());
     }
 }

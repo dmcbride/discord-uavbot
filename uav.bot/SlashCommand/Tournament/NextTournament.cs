@@ -41,6 +41,6 @@ public class NextTournament : BaseTournamentSlashCommand
             .WithColor(Color.DarkRed)
             .WithCurrentTimestamp();
         
-        return command.RespondAsync(embed: embed.Build());
+        return RespondAsync(embed: embed.Build());
     }
 }

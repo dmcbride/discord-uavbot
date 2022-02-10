@@ -10,6 +10,8 @@ namespace uav.bot.SlashCommand
 
         SlashCommandBuilder CommandBuilder { get; }
 
-        Task Invoke(SocketSlashCommand command);
+        SocketSlashCommand Command {set;}
+
+        Task DoCommand();
     }
 }

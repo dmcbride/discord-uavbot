@@ -13,5 +13,8 @@ namespace uav.logic.Constants
         public static readonly string tada = "🎉";
         public static readonly string heart = "❤️";
         public static readonly string ipmgalaxy = "<:ipmgalaxy:642968632049270795>";
+        public static readonly string turtle = "🐢";
+        public static readonly string rabbit2 = "🐇";
+        public static readonly string unicorn = "🦄";
     }
 }

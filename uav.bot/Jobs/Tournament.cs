@@ -22,7 +22,7 @@ public class Tournament : Job
          }
     }
 
-    private record GuildJobs(DayOfWeek Day, string Name, Func<Task> Action);
+    private record GuildJobs(DayOfWeek Day, string Name, Func<Task> Action, TimeOnly? TimeOfDay = null);
     private GuildJobs[] jobs;
 
     public Tournament(DiscordSocketClient client)
@@ -34,9 +34,9 @@ public class Tournament : Job
             new (DayOfWeek.Sunday, "Send Reminder 1", SendReminder),
             new (DayOfWeek.Monday, "Send Reminder 2", SendReminder),
             new (DayOfWeek.Tuesday, "Closed Tournament", ClosedTournament),
-            new (DayOfWeek.Wednesday, "Start Registration", StartRegistration),
+            //new (DayOfWeek.Wednesday, "Start Registration", StartRegistration),
             new (DayOfWeek.Thursday, "Remind Registration", RemindRegistration),
-            new (DayOfWeek.Friday, "Select Teams", SelectTeams),
+            new (DayOfWeek.Friday, "Select Teams", SelectTeams, new TimeOnly(12,0)),
         };
     }
 
@@ -58,6 +58,10 @@ public class Tournament : Job
         var nextJob = jobs.FirstOrDefault(m => m.Day > now.DayOfWeek) ?? jobs.First();
 
         var nextTime = now.Date.AddDays(nextJob.Day - now.DayOfWeek);
+        if (nextJob.TimeOfDay != null)
+        {
+            nextTime.AddTicks(nextJob.TimeOfDay.Value.Ticks);
+        }
         if (nextTime < now)
         {
             nextTime = nextTime.AddDays(7);
@@ -74,36 +78,40 @@ public class Tournament : Job
         return job.Invoke();
     }
 
-    private async Task StartRegistration()
-    {
-        // start with clearing the old roles
-        await RemoveRoleFromEveryone(_guild.GetRole(Roles.GuildAccessRole));
-        foreach (var teamRole in Roles.GuildTeams.Select(_guild.GetRole))
-        {
-            await RemoveRoleFromEveryone(teamRole);
-        }
+    // private async Task StartRegistration()
+    // {
+    //     // start with clearing the old roles
+    //     await RemoveRoleFromEveryone(_guild.GetRole(Roles.GuildAccessRole));
+    //     foreach (var teamRole in Roles.GuildTeams.Select(_guild.GetRole))
+    //     {
+    //         await RemoveRoleFromEveryone(teamRole);
+    //     }
 
-        // try removing all of the extra emotes.
-        try {
-            var msg = await _guild.GetTextChannel(905379297219473418ul).GetMessageAsync(900805354408009788ul);
-            Emote.TryParse("<:tbdcapitalplanet:852848079699050527>", out var tbdcapitalplanet);
-            var userGroups  = msg.GetReactionUsersAsync(tbdcapitalplanet, int.MaxValue);
-            await foreach (var users in userGroups)
-            {
-                foreach (var user in users)
-                {
-                    if (!user.IsBot)
-                    {
-                        await msg.RemoveReactionAsync(tbdcapitalplanet, user);
-                    }
-                }
-            }
-        }
-        finally {}
+    //     // try removing all of the extra emotes.
+    //     try {
+    //         var msg = await _guild.GetTextChannel(905379297219473418ul).GetMessageAsync(900805354408009788ul);
+    //         Emote.TryParse("<:tbdcapitalplanet:852848079699050527>", out var tbdcapitalplanet);
+    //         var userGroups  = msg.GetReactionUsersAsync(tbdcapitalplanet, int.MaxValue);
+    //         await foreach (var users in userGroups)
+    //         {
+    //             foreach (var user in users)
+    //             {
+    //                 if (!user.IsBot)
+    //                 {
+    //                     await msg.RemoveReactionAsync(tbdcapitalplanet, user);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         log4net.LogManager.GetLogger(GetType().Name).Warn("Failed to remove reactions:", e);
+    //     }
+    //     finally {}
 
-        // and let everyone know the signup is available.
-        await RegistrationMessage("Tournament Guild Registration Has Begun!");
-    }
+    //     // and let everyone know the signup is available.
+    //     await RegistrationMessage("Tournament Guild Registration Has Begun!");
+    // }
 
     private async Task RemindRegistration()
     {

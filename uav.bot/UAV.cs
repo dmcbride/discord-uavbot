@@ -24,8 +24,9 @@ namespace uav
 
             var config = new DiscordSocketConfig
             {
-                //LogLevel = LogSeverity.Debug,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers &
+                    // but we don't use these, so don't listen for them.
+                    ~(GatewayIntents.GuildInvites | GatewayIntents.GuildScheduledEvents),
                 AlwaysDownloadUsers = true,
             };
 

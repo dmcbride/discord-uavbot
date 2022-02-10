@@ -81,9 +81,10 @@ namespace uav.logic.Models
             return false;
         }
 
-        public int TierNumber => (int)Math.Floor(Math.Log10(gv)) - 6;
+        public int TierNumber => Exponential - 6;
+        public int Exponential => (int)Math.Floor(Math.Log10(gv));
   
-        private (string letter, string exp) ToStrings(double qty)
+        private static (string letter, string exp) ToStrings(double qty)
         {
             var powerOf10 = (int) Math.Floor(Math.Log10(qty));
             var powerOf1000 = powerOf10 / 3;

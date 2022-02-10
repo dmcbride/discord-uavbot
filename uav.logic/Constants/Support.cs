@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Discord;
 
 namespace uav.logic.Constants;
 
@@ -16,4 +17,8 @@ public static class Support
     private static T randomItem<T>(IList<T> items) => items[rng.Next(items.Count)];
 
     public static string SupportStatement => $"[{randomItem(supportStatements)}](https://ko-fi.com/tanktalus)";
+    public static EmbedFieldBuilder SupportStatementFieldEmbed => new EmbedFieldBuilder()
+                .WithIsInline(false)
+                .WithName("\u200B")
+                .WithValue(Support.SupportStatement);
 }

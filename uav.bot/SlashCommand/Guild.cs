@@ -20,8 +20,7 @@ public class Guild : BaseSlashCommand
 
     private GuildMessage[] guildMessages = {
         new (DayOfWeek.Monday, "Final submissions due in {0}!"),
-        new (DayOfWeek.Tuesday, "Hold on, sign up will start in {0}."),
-        new (DayOfWeek.Thursday, "Sign up now by hitting the emoji in <#900801095788527616>! Signups close in {0}!"),
+        new (DayOfWeek.Thursday, $"Sign up by hitting the emoji in <#900801095788527616>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.\n\nSignups close in {{0}}!"),
         new (DayOfWeek.Friday, "Signups are closed, hope you've signed up! Tournament will start in {0}."),
         new (DayOfWeek.Saturday, "Tournaments have started! {0} left to start or begin your guild group."),
     };
@@ -30,8 +29,8 @@ public class Guild : BaseSlashCommand
     {
         var now = DateTime.UtcNow;
 
-        var ephemeral =!IsInARole(command.User,
-            Roles.Moderator, Roles.MinerMod, Roles.HelperMod, Roles.CommunityMentor
+        var ephemeral = !IsInARole(command.User,
+            Roles.Moderator, Roles.MinerMod, Roles.HelperMod, Roles.GuildHelper
         );
 
         var msg = guildMessages.FirstOrDefault(m => m.ByEndOf >= now.DayOfWeek) ?? guildMessages.First();
@@ -43,9 +42,9 @@ public class Guild : BaseSlashCommand
         }
         var nextTime = now.Date.AddDays(daysUntil + 1);
 
-        var embed = EmbedBuilder(command.User, "Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
+        var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
 
-        return command.RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
+        return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }
 
 }
