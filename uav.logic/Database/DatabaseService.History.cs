@@ -6,15 +6,16 @@ namespace uav.logic.Database;
 
 partial class DatabaseService
 {
-    public async Task AddHistory(IDbUser u, string command, string response)
+    public async Task AddHistory(IDbUser u, string command, string options, string response)
     {
         using var connect = Connect;
 
         await SaveUser(u);
-        await connect.ExecuteAsync(@"INSERT INTO history (user_id, command, response) VALUES (@User_Id, @Command, @Response)", new {
+        await connect.ExecuteAsync(@"INSERT INTO history (user_id, command, options, response) VALUES (@User_Id, @Command, @Options, @Response)", new {
             User_Id = u.User_Id,
             Command = command,
             Response = response,
+            Options = options,
         });
     }
 }

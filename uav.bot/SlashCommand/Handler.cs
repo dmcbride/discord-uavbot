@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
@@ -40,19 +41,22 @@ namespace uav.bot.SlashCommand
 
             async Task InternalClientReady() {
                 try {
-                    var commands = _commands.Values
-                        .Select(t => (ISlashCommand)Activator.CreateInstance(t))
-                        .Select(sc => sc.CommandBuilder
-                            .WithName(sc.CommandName)
+                    var commands = new List<SlashCommandProperties>();
+                    foreach (var type in _commands.Values)
+                    {
+                        var obj = (ISlashCommand)Activator.CreateInstance(type);
+                        commands.Add((await obj.CommandBuilderAsync)
+                            .WithName(obj.CommandName)
                             .WithDefaultPermission(true)
-                            .Build())
-                        .ToArray();
+                            .Build());
+                    }
                 
                     foreach (var guild in _client.Guilds)
                     {
+                        object x = null;
                         try
                         {
-                            await _client.Rest.BulkOverwriteGuildCommands(commands, guild.Id);
+                            x = await _client.Rest.BulkOverwriteGuildCommands(commands.ToArray(), guild.Id).ConfigureAwait(false);
                         }
                         catch (HttpException exception)
                         {

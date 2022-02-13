@@ -1,7 +1,7 @@
 CREATE TABLE known_users (
     user_id BIGINT PRIMARY KEY,
-    user_name TEXT,
-    user_nick TEXT
+    user_name TEXT CHARSET utf8mb4,
+    user_nick TEXT CHARSET utf8mb4
 );
 
 CREATE TABLE tournament (

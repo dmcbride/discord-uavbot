@@ -45,6 +45,15 @@ namespace uav.logic.Models
             return new GV(gv);
         }
         
+        public static GV FromString(string v)
+        {
+            if (!TryFromString(v, out var GV, out var errorMessage))
+            {
+                throw new Exception(errorMessage);
+            }
+            return GV;
+        }
+
         public static bool TryFromString(string v, out GV gv, out string errorMessage)
         {
             errorMessage = null;

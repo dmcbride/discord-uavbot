@@ -78,13 +78,6 @@ public class MothershipRoom : BaseSlashCommand
         var msg = $"Level {level} costs **{credits[level - 2]:N0} {IpmEmoji.ipmCredits}**\n\nTotal to get here from level {startingAt} is **{credits.Take(level - 1).Skip(startingAt - 1).Sum():N0}** {IpmEmoji.ipmCredits}\n\n{Support.SupportStatement}";
         var embed = EmbedBuilder($"Mothership room cost: {room}", msg, Color.Blue);
 
-        var ephemeral = command.Channel.Id switch {
-            Channels.VacuumInSpaceAndTime => false,
-            Channels.CreditFarmersAnonymous => false,
-            Channels.LongHaulersGang => false,
-            _ => true,
-        };
-
-        await RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
+        await RespondAsync(embed: embed.Build());
     }
 }

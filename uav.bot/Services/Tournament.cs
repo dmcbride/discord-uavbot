@@ -80,7 +80,7 @@ public class Tournament
         );
         var teamsEmbeds = teams.Select((t, i) =>
             new EmbedFieldBuilder()
-                .WithName($"Team {i+1}")
+                .WithName($"Team {i+1} ({t.Length})")
                 .WithValue(string.Join("\n", t.Select(u => u.Mention)))
                 .WithIsInline(true)
         ).AndThen(new EmbedFieldBuilder().WithName("Vote for the winner!").WithValue("Which team do you think will win? Add your reaction, see who gets it right!").WithIsInline(false));

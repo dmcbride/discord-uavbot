@@ -8,7 +8,7 @@ namespace uav.bot.SlashCommand
     {
         string CommandName { get; }
 
-        SlashCommandBuilder CommandBuilder { get; }
+        Task<SlashCommandBuilder> CommandBuilderAsync { get; }
 
         SocketSlashCommand Command {set;}
 

@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using uav.logic.Constants;
 using uav.logic.Database;
 using uav.logic.Database.Model;
 using uav.logic.Extensions;
@@ -18,7 +19,9 @@ public abstract class BaseSlashCommand : ISlashCommand
 
     public virtual string CommandName => GetType().Name.ToSlashCommand();
 
-    public abstract SlashCommandBuilder CommandBuilder { get; }
+    public virtual SlashCommandBuilder CommandBuilder => throw new NotImplementedException();
+    public virtual Task<SlashCommandBuilder> CommandBuilderAsync =>
+        Task.FromResult(CommandBuilder);
 
     public SocketSlashCommand Command { protected get; set; }
     public SocketGuildUser User => Command.User as SocketGuildUser;
@@ -42,21 +45,31 @@ public abstract class BaseSlashCommand : ISlashCommand
 
         if (!isResponded)
         {
-            await databaseService.AddHistory(dbUser, commandString(), "No response");
+            await databaseService.AddHistory(dbUser, commandString(), null, "No response");
         }
     }
 
-    private bool isResponded = false;
-    protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool ephemeral = false, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
+    public virtual IEnumerable<ulong> NonEphemeralChannels => new[] {
+            Channels.VacuumInSpaceAndTime,
+            Channels.CreditFarmersAnonymous,
+            Channels.LongHaulersGang,
+    };
+    private bool IsEphemeral(bool? ephemeral)
     {
-        await Command.RespondAsync(text, embeds, isTTS, ephemeral, allowedMentions, components, embed, options);
+        return ephemeral ?? !NonEphemeralChannels.Contains(Command.Channel.Id);
+    }
+
+    private bool isResponded = false;
+    protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool? ephemeral = false, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
+    {
+        await Command.RespondAsync(text, embeds, isTTS, IsEphemeral(ephemeral), allowedMentions, components, embed, options);
         isResponded = true;
 
         var command = commandString();
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(dbUser, command, response);
+        await databaseService.AddHistory(dbUser, Command.Data.Name, command, response);
 
         IEnumerable<string> responses()
         {
@@ -99,14 +112,10 @@ public abstract class BaseSlashCommand : ISlashCommand
 
     private string commandString()
     {
-        var commandParams = new List<string> {
-            Command.Data.Name,
-        };
+        var commandParams = new List<string>();
 
         AddOptions(Command.Data.Options);
         return string.Join(" ", commandParams);
-
-
 
         void AddOptions(IEnumerable<SocketSlashCommandDataOption> options)
         {
@@ -117,11 +126,15 @@ public abstract class BaseSlashCommand : ISlashCommand
 
             foreach (var option in options)
             {
-                commandParams.Add($"{option.Name}:{option.Value}");
+                var o = option.Name;
+                if (!(option.Value?.ToString()).IsNullOrEmpty())
+                {
+                    o += $":{option.Value}";
+                }
+                commandParams.Add(o);
                 AddOptions(option.Options);
             }
         }
-
     }
 
     public virtual async Task Invoke()

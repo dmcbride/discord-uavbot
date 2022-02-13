@@ -91,7 +91,7 @@ public class GuildTournament : BaseTournamentSlashCommand
         var service = new Services.Tournament((command.User as SocketGuildUser).Guild);
         
 
-        _ = Task.Run(async () => service.SelectTeams());
+        _ = Task.Run(service.SelectTeams);
 
         await RespondAsync("Teams are being selected.", ephemeral: true);
     }
