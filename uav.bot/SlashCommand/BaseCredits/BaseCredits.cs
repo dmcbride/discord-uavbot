@@ -73,18 +73,18 @@ public class BaseCredits : BaseSlashCommand
         var gv = (string)options["gv"].Value;
         var baseCredits = (int)(long)options["base-credits"].Value;
 
-        var (message, success) = await arkService.UpdateCredits(gv, baseCredits, command.User.ToString());
+        var (message, success) = await arkService.UpdateCredits(gv, baseCredits, command.User.ToDbUser());
 
         if (success)
         {
-            var contributionCount = await databaseService.CountByUser(command.User.ToString());
+            var contributionCount = await databaseService.CountByUser(command.User.ToDbUser());
             if (contributionCount.total == 1)
             {
-                message += $"Thank you for your very first contribution!";
+                message += $" Thank you for your very first contribution!";
             }
             else
             {
-                message += $"You have now contributed **{contributionCount.total}** data point(s), **{contributionCount.distinctBaseCredits}** different base credits, across **{contributionCount.distinctTiers}** tiers.";
+                message += $" You have now contributed **{contributionCount.total}** data point(s), **{contributionCount.distinctBaseCredits}** different base credits, across **{contributionCount.distinctTiers}** tiers.";
             }
         }
 

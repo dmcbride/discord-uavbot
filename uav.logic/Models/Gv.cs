@@ -54,9 +54,18 @@ namespace uav.logic.Models
             return GV;
         }
 
+        public static GV Zero = FromNumber(0);
+
         public static bool TryFromString(string v, out GV gv, out string errorMessage)
         {
             errorMessage = null;
+
+            // some people put in $'s, just drop them.
+            if (v.StartsWith('$'))
+            {
+                v = v.Substring(1);
+            }
+
             var m = SiNumber.Match(v);
             var qty = 0d;
             gv = null;

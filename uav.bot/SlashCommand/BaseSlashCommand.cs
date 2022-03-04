@@ -19,7 +19,7 @@ public abstract class BaseSlashCommand : ISlashCommand
 
     public virtual string CommandName => GetType().Name.ToSlashCommand();
 
-    public virtual SlashCommandBuilder CommandBuilder => throw new NotImplementedException();
+    public virtual SlashCommandBuilder CommandBuilder => throw new NotImplementedException($"Missing command builder for {GetType().FullName}");
     public virtual Task<SlashCommandBuilder> CommandBuilderAsync =>
         Task.FromResult(CommandBuilder);
 
@@ -54,13 +54,14 @@ public abstract class BaseSlashCommand : ISlashCommand
             Channels.CreditFarmersAnonymous,
             Channels.LongHaulersGang,
     };
+    
     private bool IsEphemeral(bool? ephemeral)
     {
         return ephemeral ?? !NonEphemeralChannels.Contains(Command.Channel.Id);
     }
 
     private bool isResponded = false;
-    protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool? ephemeral = false, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
+    protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool? ephemeral = null, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
     {
         await Command.RespondAsync(text, embeds, isTTS, IsEphemeral(ephemeral), allowedMentions, components, embed, options);
         isResponded = true;
@@ -149,8 +150,7 @@ public abstract class BaseSlashCommand : ISlashCommand
         return new EmbedBuilder()
             .WithTitle(title)
             .WithDescription(message)
-            .WithColor(color)
-            .WithCurrentTimestamp();
+            .WithColor(color);
     }
 
     protected bool IsInARole(IUser user, params ulong[] requiredRoles) => IsInARole(user, (IEnumerable<ulong>) requiredRoles);

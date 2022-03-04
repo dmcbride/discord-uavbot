@@ -20,4 +20,10 @@ public static class UserExtensions
     }
 
     public static IDbUser ToDbUser(this SocketGuildUser u) => new DbUser(u);
+
+    // let's face it, everything we're doing actually has SocketGuildUser under the covers
+    // so make it easier.
+    public static IDbUser ToDbUser(this SocketUser u) => new DbUser(u as SocketGuildUser);
+
+    public static string DisplayName(this SocketGuildUser u) => u.Nickname ?? u.Username;
 }

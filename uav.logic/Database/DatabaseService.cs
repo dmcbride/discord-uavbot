@@ -14,10 +14,12 @@ public partial class DatabaseService
     private string connectionString = Environment.GetEnvironmentVariable("uav_dbConnection");
     private MySqlConnection Connect => new MySqlConnection(connectionString);
 
-    public async Task<(int atThisCredit, int inTier)> AddArkValue(ArkValue v, double tierMin, double tierMax)
+    public async Task<(int atThisCredit, int inTier)> AddArkValue(ArkValue v, double tierMin, double tierMax, IDbUser user)
     {
+        await SaveUser(user);
+
         using var connection = Connect;
-        await connection.ExecuteAsync(@"INSERT INTO ark_value (reporter, gv, base_credits) VALUES (@Reporter, @Gv, @Base_Credits)", v);
+        await connection.ExecuteAsync(@"INSERT INTO ark_value (gv, base_credits, user_id) VALUES (@Gv, @Base_Credits, @user_id)", v);
 
         // find out how many we have now.
         var parameters = new {v.Base_Credits};
@@ -50,12 +52,12 @@ public partial class DatabaseService
         public int distinctTiers;
     }
 
-    public async Task<UserCounts> CountByUser(string user)
+    public async Task<UserCounts> CountByUser(IDbUser user)
     {
         using var connection = Connect;
-        var parameters = new {user};
+        var parameters = new {user.User_Id};
         var values = await connection.QueryAsync<UserCounts>(
-            @"SELECT COUNT(*) total, COUNT(distinct base_credits) distinctBaseCredits, COUNT(DISTINCT FLOOR(LOG10(gv))) distinctTiers FROM ark_value WHERE reporter = @user AND NOT oopsed",
+            @"SELECT COUNT(*) total, COUNT(distinct base_credits) distinctBaseCredits, COUNT(DISTINCT FLOOR(LOG10(gv))) distinctTiers FROM ark_value WHERE user_id = @user_id AND NOT oopsed",
             parameters
         );
         return values.Single();

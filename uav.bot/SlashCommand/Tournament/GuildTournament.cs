@@ -1,3 +1,4 @@
+global using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -5,6 +6,7 @@ using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
 using uav.logic.Extensions;
+using uav.Schedule;
 
 namespace uav.bot.SlashCommand.Tournament;
 
@@ -27,6 +29,11 @@ public class GuildTournament : BaseTournamentSlashCommand
         .AddOption(new SlashCommandOptionBuilder()
             .WithName("select-teams")
             .WithDescription("Select the teams.")
+            .WithType(ApplicationCommandOptionType.SubCommand)
+        )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("next")
+            .WithDescription("Get information on the next guild tournament.")
             .WithType(ApplicationCommandOptionType.SubCommand)
         )
         // .AddOption(new SlashCommandOptionBuilder()
@@ -74,6 +81,7 @@ public class GuildTournament : BaseTournamentSlashCommand
             "cleanup" => Cleanup,
             "select-teams" => SelectTeams,
             "contestants" => Contestants,
+            "next" => Next,
             _ => throw new NotImplementedException(),
         };
         return subCommand(command);
@@ -161,6 +169,8 @@ public class GuildTournament : BaseTournamentSlashCommand
         }
     }
 
+    public override IEnumerable<ulong> NonEphemeralChannels => new[] {Channels.AllTeamsRallyRoom};
+
     private async Task Contestants(SocketSlashCommand command)
     {
         var _guild = (command.User as IGuildUser)?.Guild as SocketGuild;
@@ -168,20 +178,46 @@ public class GuildTournament : BaseTournamentSlashCommand
 
         var users = _tournament.TournamentContestants().ToArray();
         var thisUserIsIn = users.Any(x => x.user.Id == command.User.Id);
-        var allUsers = users.GroupBy(c => c.permanent).ToDictionary(g => g.Key, g => g.OrderBy(u => u.user.Nickname ?? u.user.Username));
+        var allUsers = users.GroupBy(c => c.permanent).ToDictionary(g => g.Key, g => g.OrderBy(u => u.user.Nickname ?? u.user.Username).ToArray());
         var embedFields = new[] { true, false }.Where(allUsers.ContainsKey)
             .Select(x =>
-                new EmbedFieldBuilder().WithName($"{(x ? "Permanent":"This week's")} Guild Members")
+                new EmbedFieldBuilder().WithName($"{(x ? "Permanent":"This week's")} Guild Members ({allUsers[x].Length})")
                     .WithValue(string.Join("\n", allUsers[x].Select(u => u.user.Mention)))
             ).ToArray();
 
         var msg = new EmbedBuilder()
             .WithTitle("Current guild contestants")
-            .WithDescription($"The following players are registered. {(thisUserIsIn ? "**This includes you**" : "__You are not yet registered__")}")
+            .WithDescription($"The following **{users.Length}** players are registered. {(thisUserIsIn ? "**This includes you**" : "__You are not yet registered__")}")
             .WithFields(embedFields)
             .WithColor(Color.Blue);
         
-        await RespondAsync(embed: msg.Build(), ephemeral: true);
+        await RespondAsync(embed: msg.Build());
+    }
+
+    // the day here has to be the end of that message.
+    private record GuildMessage (DayOfWeek Day, string Message, TimeOnly? Time = null) : IWeeklySchedulable;
+
+    private GuildMessage[] guildMessages = {
+        new (DayOfWeek.Tuesday, "Final submissions due in {0}!"),
+        new (DayOfWeek.Friday, $"Sign up by hitting the emoji in <#900801095788527616>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.\n\nSignups close in {{0}}!", new TimeOnly(12, 0)),
+        new (DayOfWeek.Saturday, "Signups are closed, hope you've signed up! Tournament will start in {0}."),
+        new (DayOfWeek.Sunday, "Tournaments have started! {0} left to start or begin your guild group."),
+    };
+
+    public Task Next(SocketSlashCommand command)
+    {
+        var now = DateTime.UtcNow;
+
+        var ephemeral = !IsInARole(command.User,
+            Roles.Moderator, Roles.MinerMod, Roles.HelperMod, Roles.GuildHelper
+        );
+
+        var msg = guildMessages.NextOccuring(now);
+        var nextTime = msg.NextTime(now);
+
+        var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
+
+        return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }
 
     private async Task Join(SocketSlashCommand command)

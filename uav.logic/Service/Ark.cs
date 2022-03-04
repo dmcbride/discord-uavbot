@@ -78,7 +78,7 @@ namespace uav.logic.Service
         };
         private static string ThankYou => thankYous[(int)(rng.NextDouble() * thankYous.Length)];
 
-        public async Task<(string message, bool success)> UpdateCredits(string gvInput, string creditInput, string user)
+        public async Task<(string message, bool success)> UpdateCredits(string gvInput, string creditInput, IDbUser user)
         {
             if (!int.TryParse(creditInput, out var credits))
             {
@@ -88,7 +88,7 @@ namespace uav.logic.Service
             return await UpdateCredits(gvInput, credits, user);
         }
 
-        public async Task<(string message, bool success)> UpdateCredits(string gvInput, int credits, string user)
+        public async Task<(string message, bool success)> UpdateCredits(string gvInput, int credits, IDbUser user)
         {
             var creditService = new Credits();
 
@@ -120,10 +120,10 @@ namespace uav.logic.Service
                 {
                     Base_Credits = credits,
                     Gv = gv,
-                    Reporter = user.ToString()
+                    user_id = user.User_Id,
                 };
                 var (min, max) = creditService.TierRange(gv);
-                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max);
+                var (atThisCredit, inTier) = await databaseService.AddArkValue(value, min, max, user);
 
                 return ($"{ThankYou} Recorded that your current GV of **{gv}** gives base credits of **{credits}**. There are now **{inTier}** report(s) in tier {gv.TierNumber} and **{atThisCredit}** report(s) for this base credit value.", true);
             }

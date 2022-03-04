@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dapper;
+using uav.logic.Constants;
 using uav.logic.Database.Model;
 
 namespace uav.logic.Database;
@@ -59,6 +60,21 @@ partial class DatabaseService
         ", new{ore});
         
         return results;
+    }
+
+    public async Task<int?> MinRequiredPlanet(IEnumerable<Ingredient> ingredients)
+    {
+        using var connection = Connect;
+
+        // strictly speaking, should use placeholders. But these values don't come from the user, they're
+        // washed through an enum, so they're going to always be clean.
+        var queries = ingredients.Select(i => $"SELECT MIN(id) as id FROM planet_info WHERE ore1 = '{i}' OR ore2 = '{i}' OR ore3 = '{i}'");
+
+        var results = await connection.QueryAsync<int?>(@$"
+            SELECT MAX(id) FROM ({string.Join(" UNION ", queries)}) x
+        ");
+
+        return results.FirstOrDefault();
     }
    
 }

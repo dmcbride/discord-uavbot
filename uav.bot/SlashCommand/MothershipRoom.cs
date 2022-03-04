@@ -69,9 +69,10 @@ public class MothershipRoom : BaseSlashCommand
 
         var credits = rooms[room];
 
-        if (level - 2 > credits.Length || level < 2)
+        // The array is 0-based, but starts at level 2, and so the offsets get wonky
+        if (level - 1 > credits.Length || level < 2)
         {
-            await RespondAsync($"{level} is outside the range of 2 - {credits.Length + 2} for {room}", ephemeral: true);
+            await RespondAsync($"{level} is outside the range of 2 - {credits.Length + 1} for {room}", ephemeral: true);
             return;
         }
 

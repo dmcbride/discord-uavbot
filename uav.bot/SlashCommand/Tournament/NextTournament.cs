@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
+using uav.logic.Extensions;
 
 namespace uav.bot.SlashCommand.Tournament;
 
@@ -21,6 +22,8 @@ public class NextTournament : BaseTournamentSlashCommand
         new (DayOfWeek.Sunday, $"The tournament is going on, but you can no longer join it. The next tournament will start in {{0}}.", DayOfWeek.Friday),
     };
 
+    public override IEnumerable<ulong> NonEphemeralChannels => base.NonEphemeralChannels.AndThen(Channels.AllTeamsRallyRoom);
+    
     public override Task Invoke(SocketSlashCommand command)
     {
         var now = DateTime.UtcNow;
@@ -38,8 +41,7 @@ public class NextTournament : BaseTournamentSlashCommand
             .WithTitle("Next Tournament")
             .WithDescription(message)
             .WithAuthor(command.User.ToString(), command.User.GetAvatarUrl() ?? command.User.GetDefaultAvatarUrl())
-            .WithColor(Color.DarkRed)
-            .WithCurrentTimestamp();
+            .WithColor(Color.DarkRed);
         
         return RespondAsync(embed: embed.Build());
     }

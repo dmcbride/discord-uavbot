@@ -81,7 +81,7 @@ namespace uav.validation
 
             foreach (var entry in badEntries)
             {
-                Console.WriteLine($"{entry.Reporter} : {entry.Gv:g5} : {entry.Base_Credits}");
+                Console.WriteLine($"{entry.user_id} : {entry.Gv:g5} : {entry.Base_Credits}");
             }
         }
 

@@ -25,22 +25,35 @@ public class Tournament
         Emoji.Parse("🔟"),
     };
 
+    private static Emoji[] GoTeamEmojis = new[] {
+        Emoji.Parse("🇬"),
+        Emoji.Parse("🇴"),
+        Emoji.Parse("🇹"),
+        Emoji.Parse("🇪"),
+        Emoji.Parse("🇦"),
+        Emoji.Parse("🇲"),
+    };
+
     public Tournament(DiscordSocketClient client)
     {
-        _guild = client.GetGuild(523911528328724502ul);
+        _client = client;
     }
 
     public Tournament(SocketGuild guild)
     {
-        _guild = guild;
+        _guild = guild.ValidateNotNull(nameof(guild));
     }
 
     private SocketGuild _guild;
+    private SocketGuild Guild =>
+        _guild ??= _client.GetGuild(523911528328724502ul);
+
+    private readonly DiscordSocketClient _client;
 
     public IEnumerable<(SocketGuildUser user, bool permanent)> TournamentContestants()
     {
-        var guildAccessRole = _guild.GetRole(Roles.GuildAccessRole);
-        var permanentGuildRole = _guild.GetRole(Roles.PermanentGuildAccessRole);
+        var guildAccessRole = Guild.GetRole(Roles.GuildAccessRole);
+        var permanentGuildRole = Guild.GetRole(Roles.PermanentGuildAccessRole);
         return permanentGuildRole.Members.Select(m => (user: m, permanent: true))
             .Concat(guildAccessRole.Members.Select(m => (user: m, permanent: false)))
             .DistinctBy(m => m.user.Id);
@@ -50,7 +63,7 @@ public class Tournament
     {
         var users = TournamentContestants().Select(c => c.user).ToArray();
 
-        var channel = _guild.GetTextChannel(Channels.AllTeamsRallyRoom);
+        var channel = Guild.GetTextChannel(Channels.AllTeamsRallyRoom);
         if (!users.Any())
         {
             await channel.SendMessageAsync("Guild tournament cancelled: No contestants found.");
@@ -75,30 +88,24 @@ public class Tournament
             .Select(g => g.Select(x => x.u).OrderBy(u => u.Nickname.IsNullOrEmpty() ? u.Username : u.Nickname, StringComparer.InvariantCultureIgnoreCase).ToArray())
             .ToArray();
 
-        var teamsMessage = string.Join("\n\n", 
-            teams.Select((t, i) => $"Team {i+1} ({t.Length} members)\n------\n{string.Join("\n", t.Select(u => u.Mention))}")
-        );
+        var teamsMessages = 
+            teams.Select((t, i) => $"Team {i+1} ({t.Length} members)\n------\n{string.Join("\n", t.Select(u => u.Mention))}");
         var teamsEmbeds = teams.Select((t, i) =>
             new EmbedFieldBuilder()
                 .WithName($"Team {i+1} ({t.Length})")
-                .WithValue(string.Join("\n", t.Select(u => u.Mention)))
+                .WithValue(string.Join("\n", t.Select(u => u.DisplayName())))
                 .WithIsInline(true)
         ).AndThen(new EmbedFieldBuilder().WithName("Vote for the winner!").WithValue("Which team do you think will win? Add your reaction, see who gets it right!").WithIsInline(false));
 
         // hand out the roles.
         foreach (var (team, index) in teams.Select((t, i) => (t, i)))
         {
-            var newRole = _guild.GetRole(Roles.GuildTeams[index]);
+            var newRole = Guild.GetRole(Roles.GuildTeams[index]);
             foreach (var u in team)
             {
                 await u.AddRoleAsync(newRole.Id);
             }
         }
-
-        // guild rules gets the notification message.
-        var message = $"Guild Tournament teams are:\n\n{teamsMessage}\n\nBest of luck to everyone {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!\n\n{Support.SupportStatement}";
-        var guildRulesChannel = _guild.GetTextChannel(Channels.GuildRules);
-        await guildRulesChannel.SendMessageAsync(message);
 
         // discord server gets non-notification.
         var nonNotificationMessage = $"Guild Tournament teams have been selected.\n\nBest of luck to everyone {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!\n\n{Support.SupportStatement}";
@@ -108,10 +115,29 @@ public class Tournament
             .WithFields(teamsEmbeds)
             .WithColor(Color.Blue)
             .Build();
-        var discordServerNewsChannel = _guild.GetTextChannel(Channels.DiscordServerNews);
+        var discordServerNewsChannel = Guild.GetTextChannel(Channels.DiscordServerNews);
         var msg = await discordServerNewsChannel.SendMessageAsync(embed: nonNotificationEmbed);
 
         var reactions = TeamEmojis.Take(maxTeams).ToArray();
         await msg.AddReactionsAsync(reactions);
+
+        // team channels get the notification messages.        
+        foreach (var (t, i) in teams.Select((msg, i) => (msg, i)))
+        {
+            var teamChannel = Guild.GetTextChannel(Channels.TeamChannels[i]);
+            var message = $"Guild team {i+1} ({t.Length} members)\n-------\n{string.Join("\n", t.Select(u => u.Mention))}\n\nBest of luck to team {i+1} {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!";
+            msg = await teamChannel.SendMessageAsync(message);
+            reactions = GoTeamEmojis.AndThen(TeamEmojis[i]).ToArray();
+            await msg.AddReactionsAsync(reactions);
+
+            await Task.Delay(5000);
+        }
+    }
+
+    public async Task CheckInNotification()
+    {
+        var channel = Guild.GetTextChannel(Channels.AllTeamsRallyRoom);
+        var message = $"Attention all guilders\nDoing a current rank check-in for those seeing this notification.\nBe sure to include what tourney level you are playing in - along with other group details.\n... Who else do you see?\n... How much time is left?";
+        var msg = await channel.SendMessageAsync(message);
     }
 }

@@ -36,7 +36,7 @@ public class Arks : CommandBase
     [Usage("currentGV goalGV [cashOnHand]")]
     public async Task Ark(string gv, string goalGv, string cash = null)
     {
-        await ReplyAsync("The `!ark` command has been replaced with `/ark` and has gone away. Please use `/ark`. {IpmEmoji.warning}");
+        await ReplyAsync($"The `!ark` command has been replaced with `/ark` and has gone away. Please use `/ark`. {IpmEmoji.warning}");
         return;
     }
 
@@ -99,7 +99,7 @@ To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls wh
         }
 
         var messages = parameters.NAtATime(2)
-            .SelectAsync(a => arkService.UpdateCredits(a[0], a[1], Context.User.ToString()));   
+            .SelectAsync(a => arkService.UpdateCredits(a[0], a[1], Context.User.ToDbUser()));   
         var sb = new StringBuilder();
         var savedAny = false;
         await foreach (var msg in messages)
@@ -112,7 +112,7 @@ To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls wh
         {
             if (savedAny)
             {
-                var contributionCount = await databaseService.CountByUser(Context.User.ToString());
+                var contributionCount = await databaseService.CountByUser(Context.User.ToDbUser());
                 if (contributionCount.total == 1)
                 {
                     sb.AppendLine($"Thank you for your very first contribution!");
