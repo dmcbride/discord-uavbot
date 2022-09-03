@@ -41,7 +41,7 @@ public class Scheduler
     private void StartJob(JobInfo job)
     {
         var nextTime = job.job.NextJob();
-        Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {job.job.NextJob()} (setup)");
+        Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {nextTime} (setup: {job.job.Name})");
         var timeToNext = nextTime.TotalMilliseconds;
         job.timer = new Timer(timeToNext);
         job.timer.Elapsed += async (Object source, ElapsedEventArgs e) => {
@@ -55,7 +55,6 @@ public class Scheduler
                 Console.WriteLine($"{DateTimeOffset.Now} - Exception: {ex}");
             }
             Console.WriteLine($"{DateTimeOffset.Now} - Completed job {job.job.Name}");
-            Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {job.job.NextJob()} (next)");
             job.timer.Dispose();
 
             StartJob(job);

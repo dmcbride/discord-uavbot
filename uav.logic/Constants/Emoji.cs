@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
+using Discord;
+
 namespace uav.logic.Constants
 {
     public class IpmEmoji
@@ -16,5 +20,27 @@ namespace uav.logic.Constants
         public static readonly string turtle = "🐢";
         public static readonly string rabbit2 = "🐇";
         public static readonly string unicorn = "🦄";
+        public static readonly string ipmtourney = "<:ipmtourney:848300513724071946>";
+        public static readonly string tbdcapitalplanet = "<:tbdcapitalplanet:852848079699050527>";
+
+        public static Emoji[] NumberEmojis = new[] {
+            Emoji.Parse("0️⃣"),
+            Emoji.Parse("1️⃣"),
+            Emoji.Parse("2️⃣"),
+            Emoji.Parse("3️⃣"),
+            Emoji.Parse("4️⃣"),
+            Emoji.Parse("5️⃣"),
+            Emoji.Parse("6️⃣"),
+            Emoji.Parse("7️⃣"),
+            Emoji.Parse("8️⃣"),
+            Emoji.Parse("9️⃣"),
+            Emoji.Parse("🔟"),
+        };
+
+        public static IEnumerable<Emoji> TeamEmojis => NumberEmojis.Skip(1);
+        public static Emoji Team(int i) => NumberEmojis[i];
+
+        public static readonly Emoji X = new Emoji("❌");
+
     }
 }

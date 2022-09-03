@@ -1,0 +1,27 @@
+Item;Unlock Cost;Base Value;Craft Time;Ingredient 1;Ing 1 Qty;Ing 2;Ing 2 Qty;Ing 3;Ing 3 Qty
+Copper Bar;0;$1.45E+03;00:00:20;Copper;1000;;;;
+Iron Bar;3k;$3.00E+03;00:00:30;Iron;1000;;;;
+Lead Bar;9k;$6.10E+03;00:00:40;Lead;1000;;;;
+Silicon Bar;25k;$1.25E+04;00:01:00;Silica;1000;;;;
+Aluminum Bar;75k;$2.76E+04;00:01:20;Aluminum;1000;;;;
+Silver Bar;225k;$6.00E+04;00:02:00;Silver;1000;;;;
+Gold Bar;500k;$1.20E+05;00:03:00;Gold;1000;;;;
+Bronze Alloy;1m;$2.34E+05;00:04:00;Copper Bar;10;Silver Bar;2;;
+Steel Alloy;2m;$3.40E+05;00:08:00;Iron Bar;30;Lead Bar;15;;
+Platinum Alloy;4m;$7.80E+05;00:10:00;Platinum;1000;Gold Bar;2;;
+Titanium Alloy;8m;$1.63E+06;00:12:00;Titanium;1000;Bronze Alloy;2;;
+Iridium Alloy;15m;$3.11E+06;00:14:00;Iridium;1000;Steel Alloy;2;;
+Palladium Alloy;30m;$7.00E+06;00:16:00;Palladium;1000;Platinum Alloy;2;;
+Osmium Alloy;60m;$1.45E+07;00:18:00;Osmium;1000;Titanium Alloy;2;;
+Rhodium Alloy;120m;$3.10E+07;00:20:00;Rhodium;1000;Iridium Alloy;2;;
+Inerton Alloy;250m;$6.80E+07;00:24:00;Inerton;1000;Palladium Alloy;2;;
+Quadium Alloy;500m;$1.52E+08;00:28:00;Quadium;1000;Osmium Alloy;2;;
+Scrith Alloy;1B;$3.52E+08;00:32:00;Scrith;1000;Rhodium Alloy;2;;
+Uru Alloy;2B;$8.32E+08;00:36:00;Uru;1000;Inerton Alloy;2;;
+Vibranium Alloy;4B;$2.05E+09;00:40:00;Vibranium;1000;Quadium Alloy;2;;
+Aether Alloy;8B;$5.12E+09;00:44:00;Aether;1000;Scrith Alloy;2;;
+Viterium Alloy;16B;$1.50E+10;00:48:00;Viterium;1000;Uru Bar;2;;
+Xynium Alloy;84B;$4.80E+10;00:55:00;Xynium;1500;Vibranium Alloy;5;;
+Quolium Alloy;275B;$1.60E+11;01:02:00;Quolium;1500;Aether Alloy;5;;
+Luterium Alloy;1T;$6.00E+11;01:09:00;Luterium;1500;Viterium Alloy;5;;
+Wraith Alloy;4.2T;$2.40E+12;01:16:00;Wraith;1500;Xynium Alloy;5;;

@@ -31,38 +31,6 @@ public class Arks : CommandBase
     private const double dmArkChance = 1 - cashArkChance;
     private const double arksPerHour = 10d;
 
-    [Command("ark")]
-    [Summary("Removed, replaced with /ark.")]
-    [Usage("currentGV goalGV [cashOnHand]")]
-    public async Task Ark(string gv, string goalGv, string cash = null)
-    {
-        await ReplyAsync($"The `!ark` command has been replaced with `/ark` and has gone away. Please use `/ark`. {IpmEmoji.warning}");
-        return;
-    }
-
-    [Command("cw")]
-    [Summary("Given your current GV, and your target GV, how many Cash Windfalls it will take to reach your goal")]
-    [Usage("currentGV goalGV")]
-    public Task CW(string gv, string goalGv)
-    {
-        if (!GV.TryFromString(gv, out var gvValue, out var error) ||
-            !GV.TryFromString(goalGv, out var goalGvValue, out error))
-        {
-            return ReplyAsync($"Invalid input. Usage: `!cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}");
-        }
-
-        if (goalGvValue < gvValue)
-        {
-            return ReplyAsync($"Your goal is already reached. Perhaps you meant to reverse them?");
-        }
-
-        var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
-        var dmRequired = cws * 30;
-        return ReplyAsync(@$"Warning: the `!cw` command is being replaced with `/cash-windfalls` and will go away. Please use `/cash-windfalls` in the future. {IpmEmoji.warning}
-
-To get to a GV of {goalGvValue} from {gvValue}, you need {cws} cash windfalls which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}");
-    }
-
     [Command("basecred")]
     [Summary("Tell UAV about the base credits you get for your current GV, or query the range allowed for that GV tier.")]
     [Usage("currentGV [baseCredits [gv2 credits2] ...] ")]

@@ -136,7 +136,7 @@ namespace uav.logic.Models
         public (double min, double max) TierRange()
         {
             var tier = Math.Floor(Math.Log10(gv));
-            return (Math.Pow(10d, tier), Math.Pow(10d, Math.Min(tier + 1, 100d)));
+            return (Math.Pow(10d, tier), Math.Pow(10d, Math.Min(tier + 1, Credits.MaxTier)));
         }
    }
 }

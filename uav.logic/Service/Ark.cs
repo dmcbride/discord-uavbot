@@ -4,6 +4,8 @@ using uav.logic.Models;
 using uav.logic.Constants;
 using System;
 using uav.logic.Database.Model;
+using System.Linq;
+using MathNet.Numerics;
 
 namespace uav.logic.Service
 {
@@ -132,6 +134,44 @@ namespace uav.logic.Service
                 Console.WriteLine(e);
             }
             return ("Unknown error.", false);
+        }
+
+        public async Task<GV> GVRequiredForCredits(int credits)
+        {
+            var nearArkValues = (await databaseService.FindValueByCredit(credits)).ToArray();
+
+            var matchingArkValues = nearArkValues.Where(v => v.Base_Credits == credits);
+            if (matchingArkValues.Any())
+            {
+                return GV.FromNumber(matchingArkValues.First().Gv);
+            }
+
+            var organisedByTier = nearArkValues.GroupBy(v => (int)Math.Floor(Math.Log10(v.Gv))).ToDictionary(x => x.Key, x => x.OrderBy(x => x.Gv).ToArray());
+            var tiersToCheck = organisedByTier.Keys.OrderBy(x => x);
+            
+            // find the first tier that might match, then try to extrapolate.
+            foreach (var tier in tiersToCheck)
+            {
+                var data = organisedByTier[tier];
+                if (credits < data.Last().Base_Credits && credits > data.First().Base_Credits)
+                {
+                    if (data.Length < 3)
+                    {
+                        break;
+                    }
+
+                    var xdata = data.Select(d => d.Gv).ToArray();
+                    var ydata = data.Select(d => (double)d.Base_Credits).ToArray();
+                    
+                    var (b, m) = Fit.Line(xdata, ydata);
+                    // so now we have credits = m * gv + b, thus to get gv from credits, we need gv = (credits - b) / m
+                    var gv = (credits - b) / m;
+
+                    return GV.FromNumber(gv);
+                }
+            }
+
+            return GV.Zero; // probably not enough data
         }
     }
 }

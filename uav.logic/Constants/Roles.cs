@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace uav.logic.Constants;
@@ -14,8 +15,33 @@ public static class Roles
         926553184657346660ul, // team 5
     });
     public static readonly ulong Moderator = 525329208096981002ul;
-    public static readonly ulong MinerMod = 650772364052660258ul;
-    public static readonly ulong HelperMod = 781882277651021834ul;
-    //public static readonly ulong CommunityMentor = 883421342760845344ul;
+    public static readonly ulong DedicatedToTheGame = 970041634190409738ul;
+    public static readonly ulong HelperMod = 650772364052660258ul;
+    public static readonly ulong Helper = 781882277651021834ul;
+    public static readonly ulong TraineeHelper = 986275678993391676ul;
+    public static readonly ulong Developer = 525328955843280903ul;
+    
     public static readonly ulong GuildHelper = 903684895421915156ul;
+    public static readonly ReadOnlyDictionary<int, ulong> TeamWins = new ReadOnlyDictionary<int, ulong>(new Dictionary<int, ulong> {
+        [3] = 923561253966839848ul,
+        [10] = 923561320035528735ul,
+        [25] = 923276979262865540ul,
+    });
+
+    public static readonly ISet<ulong> AllMods = new HashSet<ulong> {
+        Moderator,
+        DedicatedToTheGame,
+        HelperMod,
+        Helper,
+        TraineeHelper,
+    };
+
+    public static readonly ISet<ulong> Admins = new HashSet<ulong> {
+        Developer,
+        Moderator,
+        Helper,
+        DedicatedToTheGame,
+    };
+
+    public static readonly ulong GameRegistered = 980560129772650548ul;
 }

@@ -63,22 +63,24 @@ public partial class DatabaseService
         return values.Single();
     }
 
-    public async Task<IEnumerable<ArkValue>> FindValue(double v)
+    public async Task<IEnumerable<ArkValue>> FindValueByCredit(int credit)
     {
         using var connection = Connect;
-        var values = await connection.QueryAsync<ArkValue>(
-            @"SELECT * FROM (
-                SELECT * FROM ark_value
-                    WHERE gv < @v AND NOT oopsed
-                    ORDER BY gv DESC
-                    LIMIT 5
-                ) UNION (
-                SELECT * FROM ark_value
-                    WHERE gv > @v AND NOT oopsed
-                    ORDER BY gv ASC
-                    LIMIT 5
-                    )", new { v }
-        );
+        var sql = @"
+SELECT * FROM (
+    SELECT *
+      FROM ark_value
+     WHERE base_credits <= @c AND NOT oopsed
+     ORDER BY gv DESC
+     LIMIT 5
+) x UNION SELECT * FROM (
+    SELECT *
+      FROM ark_value
+     WHERE base_credits >= @c AND NOT oopsed
+     ORDER BY gv ASC
+     LIMIT 5
+) y";
+        var values = await connection.QueryAsync<ArkValue>(sql, new {c=credit});
 
         return values.OrderBy(v => v.Gv);
     }

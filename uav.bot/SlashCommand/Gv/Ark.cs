@@ -33,6 +33,13 @@ public class Ark : BaseGvSlashCommand
                 .WithDescription("Current cash-on-hand (defaults to current GV)")
                 .WithRequired(false)
                 .WithType(ApplicationCommandOptionType.String),
+            new SlashCommandOptionBuilder()
+                .WithName("hours-per-day")
+                .WithDescription("Hour per day of active arking")
+                .WithRequired(false)
+                .WithType(ApplicationCommandOptionType.Integer)
+                .WithMinValue(0)
+                .WithMaxValue(24)
         });
 
     public override async Task Invoke(SocketSlashCommand command)
@@ -41,6 +48,7 @@ public class Ark : BaseGvSlashCommand
         var gv = (string)options["current-gv"].Value;
         var goalGv = (string)options["target-gv"].Value;
         var cash = (string)options.GetOrDefault("coh", null)?.Value ?? gv;
+        var hoursPerDay = (long?)options.GetOrDefault("hours-per-day", null)?.Value;
 
         if (!GV.TryFromString(gv, out var gvValue, out var error) ||
             !GV.TryFromString(goalGv, out var goalGvValue, out error) ||
@@ -78,13 +86,25 @@ public class Ark : BaseGvSlashCommand
             : minHours == 0
             ? $"1 hour or less"
             : $"{minHours} - {maxHours} hours";
+        var daysMessage = string.Empty;
+        if (hoursPerDay > 0)
+        {
+            var minDays = Math.Floor(minHours / hoursPerDay.Value);
+            var maxDays = Math.Ceiling(maxHours / hoursPerDay.Value);
+            var days = minDays == maxHours
+                ? $"{minDays} day{(minDays == 1 ? string.Empty:"s")}"
+                : minDays == 0
+                ? $"1 day or less"
+                : $"{minDays} - {maxDays} days";
+            daysMessage = $"\nAt about {hoursPerDay} hours of arking per day, that is about {days}";
+        }
 
         // and then if we got that many arks in that time, we should get about 30/70 of that in DM.
         var dm = Math.Floor(arks * dmArkChance / cashArkChance);
 
 
         var message = $@"To get to a GV of **{goalGvValue}** from **{gvValue}** starting with cash-on-hand of **{cashValue}**, you need **{arks}** {IpmEmoji.boostcashwindfall} arks bringing you to a GV of **{newValue}**.
-At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.
+At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.{daysMessage}
 During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a total of {5 * dm} {IpmEmoji.ipmdm}.
 
 {Support.SupportStatement}";

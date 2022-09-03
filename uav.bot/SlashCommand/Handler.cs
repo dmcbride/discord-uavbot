@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -26,6 +25,7 @@ namespace uav.bot.SlashCommand
         {
             _client.Ready += OnClientReady;
             _client.SlashCommandExecuted += SlashCommandHandler;
+            _client.ModalSubmitted += ModalSubmittedHandler;
 
             _commands = source
                 .GetTypes()
@@ -36,7 +36,7 @@ namespace uav.bot.SlashCommand
 
         public Task OnClientReady()
         {
-            Task.Run(InternalClientReady);
+            _ = Task.Run(InternalClientReady);
             return Task.CompletedTask;
 
             async Task InternalClientReady() {
@@ -88,5 +88,24 @@ namespace uav.bot.SlashCommand
                 Console.WriteLine($"Failed to invoke {command.Data.Name}: {e}");
             }
         }
-    }
+
+        private async Task ModalSubmittedHandler(SocketModal arg)
+        {
+            var command = arg.Data.CustomId.Split(':');
+            var type = _commands[command[0]];
+            var slashCommand = (ISlashCommand)Activator.CreateInstance(type);
+            slashCommand.Modal = arg;
+
+            try
+            {
+                command = command.Skip(1).ToArray();
+                await slashCommand.DoModal(command);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to invoke {command}: {e}");
+            }
+        }
+
+   }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -28,21 +27,14 @@ public class Tournament : WeeklyJobs
             new (DayOfWeek.Tuesday, "Closed Tournament", ClosedTournament),
             //new (DayOfWeek.Wednesday, "Start Registration", StartRegistration),
             new (DayOfWeek.Thursday, "Remind Registration", RemindRegistration),
-            new (DayOfWeek.Friday, "Last Warning", SendLastRegistrationReminder),
+            //new (DayOfWeek.Friday, "Last Warning", SendLastRegistrationReminder),
             new (DayOfWeek.Friday, "Select Teams", SelectTeams, new TimeOnly(12,0)),
-            new (DayOfWeek.Saturday, "Checkin Reminder 1", CheckInReminder),
-            new (DayOfWeek.Saturday, "Checkin Reminder 2", CheckInReminder, new TimeOnly(12, 0)),
         };
     }
 
     private Task SelectTeams()
     {
         return _tournament.SelectTeams();
-    }
-
-    private Task CheckInReminder()
-    {
-        return _tournament.CheckInNotification();
     }
 
     private async Task RemindRegistration()
@@ -59,16 +51,24 @@ public class Tournament : WeeklyJobs
     {
         var embed = new EmbedBuilder()
             .WithTitle(title)
-            .WithDescription(@$"Guild Event!
+            .WithDescription(@$"⚔️ 🛡️ DISCORD GUILDS 🛡️ ⚔️ 
+
+Come join the fun!
+Looking for Miners of all levels and tournament brackets!
+
 <#900801095788527616>
+Use the simple register via emoji option
+{IpmEmoji.ipmtourney} — Full Member Access
+{IpmEmoji.tbdcapitalplanet} — Allows for 1 week team play
 
-Anyone that plans on competing in the upcoming tournament is eligible to sign up. Teams are determined 24 hours before the start of the tournament.
-
-Come and join the fun!
-
-If you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.
+— Get placed on {IpmEmoji.Team(1)} of up to {IpmEmoji.Team(5)} teams and fight for Top Average Rank throughout the IPM Tournament.
+— The Single Requirment is posting a valid screenshot of your Final Rank Claim at the end of the tournament 
+— Earn roles for Team Wins along with 💫s to mark victories 
 
 {Support.SupportStatement}")
+// TODO: get the timer working here.
+// Registration closes in {0}
+
             .WithCurrentTimestamp()
             .WithColor(Color.Teal);
         

@@ -9,11 +9,11 @@ namespace uav.bot.SlashCommand.Admin;
 
 public abstract class BaseAdminSlashCommand : BaseSlashCommand
 {
-    protected virtual IEnumerable<ulong> AllowedRoles => new[] {Roles.Moderator, Roles.MinerMod, Roles.HelperMod};
+    protected virtual IEnumerable<ulong> AllowedRoles => Roles.Admins;
     
     public override Task Invoke(SocketSlashCommand command)
     {
-        var allowed = IsInARole(command.User, AllowedRoles);
+        var allowed = IsInARole(AllowedRoles);
 
         if (!allowed)
         {

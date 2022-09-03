@@ -13,5 +13,8 @@ namespace uav.bot.SlashCommand
         SocketSlashCommand Command {set;}
 
         Task DoCommand();
+
+        SocketModal Modal {set;}
+        Task DoModal(string[] command);
     }
 }

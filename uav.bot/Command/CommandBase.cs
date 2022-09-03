@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using uav.logic.Database;
 
 namespace uav.Command
 {
@@ -32,6 +33,7 @@ namespace uav.Command
 
         protected async Task ReplyAsDMAsync(string message)
         {
+            await new DatabaseService().SaveUser(Context.User.ToDbUser());
             var channel = await Context.User.CreateDMChannelAsync();
             await channel.SendMessageAsync(message);
         }
@@ -48,6 +50,7 @@ namespace uav.Command
 
         protected async Task ReplyAsync(EmbedBuilder embed)
         {
+            await new DatabaseService().SaveUser(Context.User.ToDbUser());
             await ReplyAsync(embed: embed.Build());
         }
     }

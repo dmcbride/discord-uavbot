@@ -19,4 +19,6 @@ FROM
     history h
 LEFT JOIN
     known_users u ON h.user_id = u.user_id
+ORDER BY
+    h.activity_time DESC
 ;

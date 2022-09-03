@@ -13,8 +13,8 @@ namespace uav.bot.SlashCommand.Admin;
 public class ApplyUserTierToNickname : BaseAdminSlashCommand
 {
     private static string superscripts = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-    private static char turtlePrefix = '^';
-    private static char rabbitPrefix = '*';
+    private static char gvTierPrefix = '^';
+    private static char salesPrefix = '*';
 
     private string toSuperscriptNumbers(long n)
     {
@@ -37,10 +37,12 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
         ("Dragon (tourney/challenge)", "🐲"),
         ("Unicorn (tourney/challenge)", "🦄"),
         ("Worm (tourney only)", "🪱"),
-        ("Whale ($$$)", "🐳"),
+        ("Snake (challenge only)", "🐍"),
         ("Robot (UAV Mod)", "🤖"),
         ("Bat (Man)", "🦇"),
         ("Penguin (Arms)", "🐧"),
+        ("Lion (3-win streak in guilds)", "🦁"),
+        ("Seal (ark ark! contest winner)", "🦭"),
     };
 
     private static Regex PetFinder = new Regex($"^((?:{string.Join("|",Pets.Where(p=>p.Pet.Any()).Select(p=>p.Pet))}) ?)?");
@@ -54,6 +56,14 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
             choices: Pets.Select(p => new ApplicationCommandOptionChoiceProperties{Name = p.Name, Value = p.Pet}).ToArray(),
             isRequired: false);
 
+    private static readonly Regex beforeEndOfNickname = new Regex(@$"(?= *[^{superscripts}{gvTierPrefix}{salesPrefix}\sa-zA-Z]*?$)");
+    private static readonly string salesLooksLike = @$"[{salesPrefix}][{superscripts}]+(?=[^{superscripts}]|$)";
+    private static readonly Regex findSales = new Regex(salesLooksLike);
+    private static readonly Regex afterSales = new Regex($"(?<={salesLooksLike})");
+    private static readonly string gvTierLooksLike = @$"{gvTierPrefix}[{superscripts}]+(?=[^{superscripts}]|$)";
+    private static readonly Regex findGvTier = new Regex(gvTierLooksLike);
+    private static readonly Regex beforeGvTier = new Regex($"(?={gvTierLooksLike})");
+
     protected override async Task InvokeAdminCommand(SocketSlashCommand command)
     {
         var options = CommandArguments(command);
@@ -62,16 +72,25 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
         var gvString = (string)options.GetOrDefault("best-gv", null)?.Value;
         var sales = (long?)options.GetOrDefault("sales", null)?.Value;
         var pet = (string)options.GetOrDefault("pet", null)?.Value;
-        if (pet?.Length > 0)
-        {
-            pet += " ";
-        }
         
-        List<string> suffixes = new();
+        var nick = startingName;
 
         if (sales != null)
         {
-            suffixes.Add($"{rabbitPrefix}{toSuperscriptNumbers(sales.Value)}");
+            var salesIndicator = sales == 0 ? string.Empty : $"{salesPrefix}{toSuperscriptNumbers(sales.Value)}";
+
+            if (findSales.IsMatch(nick))
+            {
+                nick = findSales.Replace(nick, salesIndicator);
+            }
+            else if (findGvTier.IsMatch(nick))
+            {
+                nick = beforeGvTier.Replace(nick, salesIndicator);
+            }
+            else
+            {
+                nick = beforeEndOfNickname.Replace(nick, salesIndicator);
+            }
         }
 
         if (gvString != null)
@@ -83,39 +102,43 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
             }
 
             var tier = gv < 1_000 ? (int)gv : gv.Exponential;
-            suffixes.Add($"{turtlePrefix}{toSuperscriptNumbers(tier)}");
+
+            var tierIndicator = tier == 0 ? string.Empty : $"{gvTierPrefix}{toSuperscriptNumbers(tier)}";
+            Console.WriteLine($"tier = {tier}, indicator = {tierIndicator}");
+            if (findGvTier.IsMatch(nick))
+            {
+                Console.WriteLine("Found tier");
+                nick = findGvTier.Replace(nick, tierIndicator);
+            }
+            else if (findSales.IsMatch(nick))
+            {
+                Console.WriteLine("after sales");
+                nick = afterSales.Replace(nick, tierIndicator);
+            }
+            else
+            {
+                Console.WriteLine("before end");
+                nick = beforeEndOfNickname.Replace(nick, tierIndicator);
+            }
         }
 
-        if (!suffixes.Any())
+        // /apply-user-tier-to-nickname user:@Tommy Salami#5759 best-gv:349q sales:773 pet:Rabbit (credit farmer)
+        if (pet != null)
         {
-            await RespondAsync($"Neither best-gv nor sales given?", ephemeral: true);
-            return;
-        }
-
-        var nick = user.Username;
-        var suffix = " " + string.Join("", suffixes);
-
-        if (!user.Nickname.IsNullOrEmpty())
-        {
-            nick = Regex.Replace(user.Nickname, $" ?[{superscripts}{turtlePrefix}{rabbitPrefix}]+(?= *[^{superscripts}{turtlePrefix}{rabbitPrefix}]*?$)", suffix);
-        }
-        else
-        {
-            nick += suffix;
-        }
-        
-        if (!pet.IsNullOrEmpty())
-        {
+            if (!pet.IsNullOrEmpty())
+            {
+                pet += " ";
+            }
             nick = PetFinder.Replace(nick, pet);
         }
 
         if (nick.Length > 32)
         {
-            await RespondAsync($"Sorry - that would be too long for a nickname.", ephemeral: true);
+            await RespondAsync($"Sorry - '{nick}' would be too long for a nickname.", ephemeral: true);
             return;
         }
 
         await (user as SocketGuildUser).ModifyAsync(x => x.Nickname = nick);
-        await RespondAsync($"Set nickname to {nick}, was {startingName}", ephemeral: true);
+        await RespondAsync($"Set nickname to `{nick}`, was `{startingName}`", ephemeral: true);
     }
 }

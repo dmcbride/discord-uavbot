@@ -41,8 +41,9 @@ public class NextTournament : BaseTournamentSlashCommand
             .WithTitle("Next Tournament")
             .WithDescription(message)
             .WithAuthor(command.User.ToString(), command.User.GetAvatarUrl() ?? command.User.GetDefaultAvatarUrl())
-            .WithColor(Color.DarkRed);
+            .WithColor(Color.DarkRed)
+            .WithCurrentTimestamp();
         
-        return RespondAsync(embed: embed.Build());
+        return RespondAsync(embed: embed.Build(), ephemeral: false);
     }
 }

@@ -12,19 +12,6 @@ namespace uav.bot.Services;
 
 public class Tournament
 {
-    private static Emoji[] TeamEmojis = new[] {
-        Emoji.Parse("1️⃣"),
-        Emoji.Parse("2️⃣"),
-        Emoji.Parse("3️⃣"),
-        Emoji.Parse("4️⃣"),
-        Emoji.Parse("5️⃣"),
-        Emoji.Parse("6️⃣"),
-        Emoji.Parse("7️⃣"),
-        Emoji.Parse("8️⃣"),
-        Emoji.Parse("9️⃣"),
-        Emoji.Parse("🔟"),
-    };
-
     private static Emoji[] GoTeamEmojis = new[] {
         Emoji.Parse("🇬"),
         Emoji.Parse("🇴"),
@@ -82,6 +69,14 @@ public class Tournament
             Math.Min(Roles.GuildTeams.Count, (users.Length + 4) / 5)
         );
 
+        var today = DateTime.UtcNow.AddDays(1).Date;
+        if (
+            (today.Month % 2 == 0 && today.Day <= 7) // first week of an even-numbered month
+        )
+        {
+            maxTeams = 2;
+        }
+
         var teams = users
             .Select((u, i) => (u, i))
             .GroupBy(x => x.i % maxTeams)
@@ -118,19 +113,22 @@ public class Tournament
         var discordServerNewsChannel = Guild.GetTextChannel(Channels.DiscordServerNews);
         var msg = await discordServerNewsChannel.SendMessageAsync(embed: nonNotificationEmbed);
 
-        var reactions = TeamEmojis.Take(maxTeams).ToArray();
+        var reactions = IpmEmoji.TeamEmojis.Take(maxTeams).ToArray();
         await msg.AddReactionsAsync(reactions);
 
+        var winnersLogbookChannel = Guild.GetTextChannel(Channels.WinnersLogbook);
+        await winnersLogbookChannel.SendMessageAsync(embed: nonNotificationEmbed);
+        
         // team channels get the notification messages.        
-        foreach (var (t, i) in teams.Select((msg, i) => (msg, i)))
+        foreach (var (t, i, teamNumber) in teams.Select((msg, i) => (msg, i, i + 1)))
         {
-            var teamChannel = Guild.GetTextChannel(Channels.TeamChannels[i]);
-            var message = $"Guild team {i+1} ({t.Length} members)\n-------\n{string.Join("\n", t.Select(u => u.Mention))}\n\nBest of luck to team {i+1} {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!";
-            msg = await teamChannel.SendMessageAsync(message);
-            reactions = GoTeamEmojis.AndThen(TeamEmojis[i]).ToArray();
-            await msg.AddReactionsAsync(reactions);
-
             await Task.Delay(5000);
+
+            var teamChannel = Guild.GetTextChannel(Channels.TeamChannels[i]);
+            var message = $"Guild team {teamNumber} ({t.Length} members)\n-------\n{string.Join("\n", t.Select(u => u.Mention))}\n\nBest of luck to team {i+1} {IpmEmoji.four_leaf_clover} and may the markets be ever in your favour!";
+            msg = await teamChannel.SendMessageAsync(message);
+            reactions = GoTeamEmojis.AndThen(IpmEmoji.Team(teamNumber)).ToArray();
+            await msg.AddReactionsAsync(reactions);
         }
     }
 

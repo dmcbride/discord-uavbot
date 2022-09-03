@@ -6,6 +6,9 @@ namespace uav.logic.Extensions
     public static class StringExtensions
     {
         public static bool IsNullOrEmpty(this string s) => string.IsNullOrEmpty(s);
+        public static bool HasValue(this string s) => !string.IsNullOrEmpty(s);
+
+        public static string IfNullOrEmptyThen(this string s, string fallback) => s.IsNullOrEmpty() ? fallback : s;
 
         private static Regex slashCommandDashLocator = new Regex(@"(?<=[a-z])\s?(?=[A-Z])");
         public static string ToSlashCommand(this string s) => slashCommandDashLocator.Replace(s, "-").ToLower();

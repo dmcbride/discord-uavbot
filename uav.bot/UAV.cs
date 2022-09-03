@@ -28,6 +28,7 @@ namespace uav
                     // but we don't use these, so don't listen for them.
                     ~(GatewayIntents.GuildInvites | GatewayIntents.GuildScheduledEvents),
                 AlwaysDownloadUsers = true,
+                UseInteractionSnowflakeDate = false,
             };
 
             _client = new DiscordSocketClient(config);
@@ -43,6 +44,7 @@ namespace uav
             var slashHandler = new bot.SlashCommand.Handler(_client, GetType().Assembly);
             var jobScheduler = new Scheduler();
             jobScheduler.AddJob(new bot.Jobs.Tournament(_client));
+            jobScheduler.AddJob(new bot.Jobs.Leaderboards(_client));
 
             await _client.LoginAsync(TokenType.Bot, secret);
             await _client.StartAsync();
@@ -80,7 +82,7 @@ namespace uav
                 StaticLogFileName = true,
                 Encoding = System.Text.Encoding.UTF8,
             };
-            rollingFileAppender.ActivateOptions()   ;
+            rollingFileAppender.ActivateOptions();
             hierarchy.Root.AddAppender(rollingFileAppender);
 
             hierarchy.Root.Level = Level.Info;

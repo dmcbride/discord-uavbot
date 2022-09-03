@@ -1,0 +1,32 @@
+Item;Unlock Cost;Base Value;Craft Time Base;Ingredient 1;Ingredient 1 quantity;Ingredient 2;Ingredient 2 quantity;Ingredient 3;Ingredient 3 quantity
+Copper Wire;0;10k;00:01:00;Copper Bar;5;;;;
+Iron Nails;20k;20k;00:02:00;Iron Bar;5;;;;
+Battery;50k;70k;00:04:00;Copper Bar;10;Copper Wire;2;;
+Hammer;100k;135k;00:08:00;Lead Bar;5;Iron Nails;2;;
+Glass;200k;220k;00:12:00;Silicon Bar;10;;;;
+Circuit;400k;620k;00:20:00;Silicon Bar;5;Aluminium Bar;5;Copper Wire;10
+Lens;1M;1.1M;00:40:00;Silver Bar;5;Glass;1;;
+Laser;2M;3.2M;01:00:00;Iron Bar;10;Gold Bar;5;Lens;1
+Basic Computer;5M;7.6M;01:20:00;Silver Bar;5;Circuit;5;;
+Solar Panel;10M;12.5M;01:40:00;Glass;10;Circuit;5;;
+Laser Torch;20M;31M;02:00:00;Bronze Alloy;5;Lens;5;Laser;2
+Advanced Battery;30M;35M;02:30:00;Battery;30;Steel Alloy;20;;
+Thermal Scanner;50M;71.5M;03:00:00;Platinum Alloy;5;Glass;5;Laser;2
+Advanced Computer;120M;180M;03:30:00;Titanium Alloy;5;Basic Computer;5;;
+Navigation Module;250M;1B;03:45:00;Laser Torch;1;Thermal Scanner;1;;
+Plasma Torch;550M;1.1B;04:10:00;Iridium Alloy;15;Laser Torch;5;;
+Radio Tower;1.5B;1.145B;04:20:00;Aluminium Bar;150;Platinum Alloy;75;Titanium Alloy;50
+Telescope;5B;2.7B;04:40:00;Lens;20;Advanced Computer;1;;
+Satellite Dish;17.5B;3.4B;05:00:00;Steel Alloy;150;Palladium Alloy;30;;
+Motor;60B;7B;05:20:00;Bronze Alloy;500;Hammer;200;;
+Accumulator;100B;12B;05:40:00;Osmium Alloy;20;Advanced Battery;3;;
+Nuclear Capsule;200B;26B;05:50:00;Rhodium Alloy;5;Plasma Torch;1;;
+Wind Turbine;500B;140B;06:00:00;Aluminium Bar;300;Motor;1;;
+Space Probe;1000B;180B;06:10:00;Solar Panel;25;Telescope;1;Satellite Dish;1
+Nuclear Reactor;2T;1T;06:20:00;Iridium Alloy;300;Nuclear Capsule;1;;
+Collider;3T;2T;06:25:00;Inerton Alloy;500;Quadium Alloy;100;;
+Gravitiy Chamber;6T;15T;06:45:00;Advanced Computer;60;Nuclear Reactor;1;;
+Robot;15T;70T;07:05:00;Scrith Alloy;300;Accumulator;90;;
+Fusion Capsule;75T;240T;07:17:00;Uru Alloy;200;Vibranium Alloy;100;Nuclear Capsule;100
+Teleporter;500T;1.8q;07:30:00;Navigation Module;250;Gravitiy Chamber;1;;
+Fusion Reactor;2.5q;40q;08:20:00;Nuclear Reactor;50;Collider;40;Fusion Capsule;1

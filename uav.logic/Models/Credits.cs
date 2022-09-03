@@ -10,7 +10,7 @@ namespace uav.logic.Models
     public class Credits
     {
         private const int TierOffset = 6; // 10m
-        private const int MaxTier = 109 - TierOffset; // from 1E7 to 1E109
+        public const int MaxTier = 109 - TierOffset; // from 1E7 to 1E109
         private static float[] prestigeTierValueBase = new float[MaxTier];
         private DatabaseService database = new DatabaseService();
 
@@ -36,7 +36,7 @@ namespace uav.logic.Models
         public (double gvFloor, double gvCeiling) TierRange(double gv)
         {
             var tier = Math.Floor(Math.Log10(gv));
-            var upperTier = Math.Min(tier + 1, 100);
+            var upperTier = Math.Min(tier + 1, MaxTier);
 
             return (Math.Pow(10, tier), Math.Pow(10, upperTier));
         }

@@ -1,11 +1,11 @@
 global using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
-using uav.logic.Extensions;
 using uav.Schedule;
 
 namespace uav.bot.SlashCommand.Tournament;
@@ -18,8 +18,8 @@ public class GuildTournament : BaseTournamentSlashCommand
             .WithName("cleanup")
             .WithDescription("Admin cleanup on aisle 4!")
             .WithType(ApplicationCommandOptionType.SubCommand)
-            .AddOption("really", ApplicationCommandOptionType.Boolean, "Are you really sure?", required: true)
-            .AddOption("no-really", ApplicationCommandOptionType.Boolean, "NOnono, I mean REALLY sure?", required: true)
+            .AddOption("really", ApplicationCommandOptionType.Boolean, "Are you really sure?", isRequired: true)
+            .AddOption("no-really", ApplicationCommandOptionType.Boolean, "NOnono, I mean REALLY sure?", isRequired: true)
         )
         .AddOption(new SlashCommandOptionBuilder()
             .WithName("contestants")
@@ -35,6 +35,31 @@ public class GuildTournament : BaseTournamentSlashCommand
             .WithName("next")
             .WithDescription("Get information on the next guild tournament.")
             .WithType(ApplicationCommandOptionType.SubCommand)
+        )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("check-in")
+            .WithDescription("Check in reminder prompt")
+            .WithType(ApplicationCommandOptionType.SubCommand)
+        )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("set-win-count")
+            .WithDescription("Set the win count role")
+            .WithType(ApplicationCommandOptionType.SubCommand)
+            .AddOption("user", ApplicationCommandOptionType.User, "User to set win count role", isRequired: true)
+            .AddOption("win-count", ApplicationCommandOptionType.Integer, "Count of wins", isRequired: true,
+                choices: new [] {
+                    new ApplicationCommandOptionChoiceProperties {Name="Remove Role", Value=0},
+                    new ApplicationCommandOptionChoiceProperties {Name="3", Value=3},
+                    new ApplicationCommandOptionChoiceProperties {Name="10", Value=10},
+                    new ApplicationCommandOptionChoiceProperties {Name="25", Value=25}
+                })
+        )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("set-winstreak-lion")
+            .WithDescription("Add/Remove winstreak lion pet")
+            .WithType(ApplicationCommandOptionType.SubCommand)
+            .AddOption("user", ApplicationCommandOptionType.User, "User to add/remove lion pet", isRequired: true)
+            .AddOption("add", ApplicationCommandOptionType.Boolean, "True = add, False = remove", isRequired: true)
         )
         // .AddOption(new SlashCommandOptionBuilder()
         //     .WithName("join")
@@ -72,32 +97,35 @@ public class GuildTournament : BaseTournamentSlashCommand
 
     public override Task Invoke(SocketSlashCommand command)
     {
-        Func<SocketSlashCommand, Task> subCommand = command.Data.Options.First().Name switch {
-            "join" => Join,
-            "leave" => Leave,
-            "add" => Add,
-            "remove" => Remove,
-            "winner" => Winner,
+        Func<SocketSlashCommand, Task> subCommand = SubCommandName switch {
+            // "join" => Join,
+            // "leave" => Leave,
+            // "add" => Add,
+            // "remove" => Remove,
+            // "winner" => Winner,
             "cleanup" => Cleanup,
             "select-teams" => SelectTeams,
             "contestants" => Contestants,
             "next" => Next,
+            "check-in" => CheckInReminder,
+            "set-win-count" => SetWinCount,
+            "set-winstreak-lion" => SetWinstreakLion,
             _ => throw new NotImplementedException(),
         };
         return subCommand(command);
     }
+    public override IEnumerable<ulong> NonEphemeralChannels => new[] {Channels.AllTeamsRallyRoom};
 
     private async Task SelectTeams(SocketSlashCommand command)
     {
-        var allowed = IsInARole(command.User, Roles.HelperMod, Roles.MinerMod, Roles.Moderator);
+        var allowed = IsInARole(Roles.AllMods, Roles.GuildHelper);
         if (!allowed)
         {
             await RespondAsync("You do not have permissions to do this.", ephemeral: true);
             return;
         }
 
-        var service = new Services.Tournament((command.User as SocketGuildUser).Guild);
-        
+        var service = new Services.Tournament((command.User as SocketGuildUser).Guild);        
 
         _ = Task.Run(service.SelectTeams);
 
@@ -115,7 +143,7 @@ public class GuildTournament : BaseTournamentSlashCommand
 
     private async Task Cleanup(SocketSlashCommand command)
     {
-        var allowed = IsInARole(command.User, Roles.HelperMod, Roles.MinerMod, Roles.Moderator);
+        var allowed = IsInARole(Roles.AllMods, Roles.GuildHelper);
         if (!allowed)
         {
             await RespondAsync("You do not have permissions to do this.", ephemeral: true);
@@ -169,7 +197,20 @@ public class GuildTournament : BaseTournamentSlashCommand
         }
     }
 
-    public override IEnumerable<ulong> NonEphemeralChannels => new[] {Channels.AllTeamsRallyRoom};
+    private async Task SetWinstreakLion(SocketSlashCommand command)
+    {
+        var options = CommandArguments(command.Data.Options.First().Options);
+        var user = options["user"].Value as SocketGuildUser;
+        var add = (bool)options["add"];
+
+        var nick = user.DisplayName;
+        var lion = "🦁";
+        
+        var newNick = new Regex("^🦁").Replace(nick, add ? lion : string.Empty);
+        await user.ModifyAsync(x => x.Nickname = newNick);
+
+        await RespondAsync($"Updated `{nick}` to `{newNick}`");
+    }
 
     private async Task Contestants(SocketSlashCommand command)
     {
@@ -182,7 +223,7 @@ public class GuildTournament : BaseTournamentSlashCommand
         var embedFields = new[] { true, false }.Where(allUsers.ContainsKey)
             .Select(x =>
                 new EmbedFieldBuilder().WithName($"{(x ? "Permanent":"This week's")} Guild Members ({allUsers[x].Length})")
-                    .WithValue(string.Join("\n", allUsers[x].Select(u => u.user.Mention)))
+                    .WithValue(string.Join("\n", allUsers[x].Select(u => u.user.DisplayName())))
             ).ToArray();
 
         var msg = new EmbedBuilder()
@@ -208,8 +249,8 @@ public class GuildTournament : BaseTournamentSlashCommand
     {
         var now = DateTime.UtcNow;
 
-        var ephemeral = !IsInARole(command.User,
-            Roles.Moderator, Roles.MinerMod, Roles.HelperMod, Roles.GuildHelper
+        var ephemeral = !IsInARole(
+            Roles.AllMods, Roles.GuildHelper
         );
 
         var msg = guildMessages.NextOccuring(now);
@@ -220,28 +261,72 @@ public class GuildTournament : BaseTournamentSlashCommand
         return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }
 
-    private async Task Join(SocketSlashCommand command)
+    private async Task CheckInReminder(SocketSlashCommand command)
     {
+        var allowed = IsInARole(Roles.AllMods, Roles.GuildHelper);
+        if (!allowed)
+        {
+            await RespondAsync("You do not have permissions to do this.", ephemeral: true);
+            return;
+        }
 
+        var message = $"Attention all guilders\nDoing a current rank check-in for those seeing this notification.\nBe sure to include what tourney level you are playing in - along with other group details.\n... Who else do you see?\n... How much time is left?\n\n{Support.SupportStatement}";
+        var embed = EmbedBuilder("Check in", message, Color.Blue);
+
+        await RespondAsync(embed: embed.Build());
     }
 
-    private async Task Leave(SocketSlashCommand command)
+    private async Task SetWinCount(SocketSlashCommand command)
     {
+        var allowed = IsInARole(Roles.AllMods, Roles.GuildHelper);
+        if (!allowed)
+        {
+            await RespondAsync("You do not have permissions to do this.", ephemeral: true);
+            return;
+        }
+
+        var options = CommandArguments(command.Data.Options.First().Options);
+        var user = options["user"].Value as SocketGuildUser;
+        var winCount = (int)(long)options["win-count"].Value;
+        var userRoles = user?.Roles.Select(r => r.Id).ToHashSet();
+
+        await RespondAsync($"Setting user {user.DisplayName} to have role for {winCount} wins");
+
+        foreach (var (win, role) in Roles.TeamWins)
+        {
+            if (win == winCount && !userRoles.Contains(role))
+            {
+                await user.AddRoleAsync(role);
+            }
+            else if (win != winCount && userRoles.Contains(role))
+            {
+                await user.RemoveRoleAsync(role);
+            }
+        }
+    }
+
+    // private async Task Join(SocketSlashCommand command)
+    // {
+
+    // }
+
+    // private async Task Leave(SocketSlashCommand command)
+    // {
         
-    }
+    // }
 
-    private async Task Add(SocketSlashCommand command)
-    {
+    // private async Task Add(SocketSlashCommand command)
+    // {
         
-    }
+    // }
 
-    private async Task Remove(SocketSlashCommand command)
-    {
+    // private async Task Remove(SocketSlashCommand command)
+    // {
         
-    }
+    // }
 
-    private async Task Winner(SocketSlashCommand command)
-    {
+    // private async Task Winner(SocketSlashCommand command)
+    // {
 
-    }
+    // }
 }

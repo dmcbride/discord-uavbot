@@ -25,17 +25,17 @@ public class PlanetInfo : BaseSlashCommand
                             .WithName("by-name")
                             .WithDescription("Information about each planet")
                             .WithType(ApplicationCommandOptionType.SubCommand)
-                            .AddOption("planet", ApplicationCommandOptionType.String, "Planet name", required: true),
+                            .AddOption("planet", ApplicationCommandOptionType.String, "Planet name", isRequired: true),
                         new SlashCommandOptionBuilder()
                             .WithName("by-id")
                             .WithDescription("Information about each planet")
                             .WithType(ApplicationCommandOptionType.SubCommand)
-                            .AddOption("id", ApplicationCommandOptionType.Integer, "Planet ID", required: true, minValue: 1, maxValue: planetNames.Length),
+                            .AddOption("id", ApplicationCommandOptionType.Integer, "Planet ID", isRequired: true, minValue: 1, maxValue: planetNames.Length),
                         new SlashCommandOptionBuilder()
                             .WithName("by-ore")
                             .WithDescription("Information about the planets producing the given ore")
                             .WithType(ApplicationCommandOptionType.SubCommand)
-                            .AddOption("ore", ApplicationCommandOptionType.String, "Ore", required: true, choices: ores.Select(o => new ApplicationCommandOptionChoiceProperties{Name=o,Value=o}).ToArray())
+                            .AddOption("ore", ApplicationCommandOptionType.String, "Ore", isRequired: true, choices: ores.Select(o => new ApplicationCommandOptionChoiceProperties{Name=o,Value=o}).ToArray())
                     )
                     ;
 

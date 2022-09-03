@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using uav.logic.Constants;
 using uav.logic.Database;
 using uav.logic.Models;
 using uav.logic.Service;
@@ -23,23 +24,23 @@ public class BaseCredits : BaseSlashCommand
                 .WithName("submit")
                 .WithDescription("Submit a known GV-to-base-credit pair")
                 .WithType(ApplicationCommandOptionType.SubCommand)
-                .AddOption("gv", ApplicationCommandOptionType.String, "GV", required: true)
-                .AddOption("base-credits", ApplicationCommandOptionType.Integer, "Base credits", minValue: 10, required: true)
+                .AddOption("gv", ApplicationCommandOptionType.String, "GV", isRequired: true)
+                .AddOption("base-credits", ApplicationCommandOptionType.Integer, "Base credits", minValue: 10, isRequired: true)
         )
         .AddOption(
             new SlashCommandOptionBuilder()
                 .WithName("credits-for")
                 .WithType(ApplicationCommandOptionType.SubCommand)
                 .WithDescription("Calculates / estimates the credits for a particular GV")
-                .AddOption("gv", ApplicationCommandOptionType.String, "GV", required: true)
+                .AddOption("gv", ApplicationCommandOptionType.String, "GV", isRequired: true)
         )
-        // .AddOption(
-        //     new SlashCommandOptionBuilder()
-        //         .WithName("gv-for")
-        //         .WithType(ApplicationCommandOptionType.SubCommand)
-        //         .WithDescription("Estimate the GV required for a given base credits")
-        //         .AddOption("credits", ApplicationCommandOptionType.Integer, "credits", minValue: 10, required: true)
-        // )
+        .AddOption(
+            new SlashCommandOptionBuilder()
+                .WithName("gv-for")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .WithDescription("Estimate the GV required for a given base credits")
+                .AddOption("credits", ApplicationCommandOptionType.Integer, "credits", minValue: 10, isRequired: true)
+        )
         ;
 
     public override Task Invoke(SocketSlashCommand command)
@@ -102,9 +103,19 @@ public class BaseCredits : BaseSlashCommand
         return;
     }
 
-    private Task GvFor(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
+    private async Task GvFor(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var baseCredits = (long)options["base-credits"].Value;
-        return Task.CompletedTask; // fixme
+        var baseCredits = (int)(long)options["credits"].Value;
+        var gv = await arkService.GVRequiredForCredits(baseCredits);
+
+        if (gv == GV.Zero)
+        {
+            await RespondAsync($"There is not yet enough information to guess the GV for {baseCredits}");
+            return;
+        }
+
+        var msg = $"By my calculations, it appears you can get {baseCredits} {IpmEmoji.ipmCredits} with a GV of approximately **${gv}**.";
+
+        await RespondAsync(msg);
     }
 }

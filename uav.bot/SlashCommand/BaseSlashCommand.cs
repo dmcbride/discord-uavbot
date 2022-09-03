@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -24,13 +22,17 @@ public abstract class BaseSlashCommand : ISlashCommand
         Task.FromResult(CommandBuilder);
 
     public SocketSlashCommand Command { protected get; set; }
-    public SocketGuildUser User => Command.User as SocketGuildUser;
-    protected IDbUser dbUser;
+    protected string SubCommandName => Command.Data.Options.First().Name;
+    protected SocketInteraction Interaction => Command as SocketInteraction ?? Modal;
+    
+    public SocketGuildUser User => Interaction.User as SocketGuildUser;
+    private IDbUser _dbUser;
+    protected IDbUser dbUser => _dbUser ??= User.ToDbUser();
+
+    public SocketGuild Guild => User.Guild;
 
     public async Task DoCommand()
     {
-        dbUser = User.ToDbUser();
-
         // save user.
         await databaseService.SaveUser(dbUser);
 
@@ -54,23 +56,58 @@ public abstract class BaseSlashCommand : ISlashCommand
             Channels.CreditFarmersAnonymous,
             Channels.LongHaulersGang,
     };
-    
-    private bool IsEphemeral(bool? ephemeral)
+
+    public SocketModal Modal { protected get; set; }
+
+    private bool isDeferred = false;
+    protected async Task DeferAsync(bool? ephemeral = null)
     {
-        return ephemeral ?? !NonEphemeralChannels.Contains(Command.Channel.Id);
+        if (Command is not null)
+        {
+            ephemeral ??= IsEphemeral(ephemeral);
+            isDeferred = true;
+            await Command.DeferAsync(ephemeral.Value);
+        }
+    }
+
+    protected virtual bool IsEphemeral(bool? ephemeral)
+    {
+        return ephemeral ?? !NonEphemeralChannels.Contains(Interaction.Channel.Id);
     }
 
     private bool isResponded = false;
     protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool? ephemeral = null, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
     {
-        await Command.RespondAsync(text, embeds, isTTS, IsEphemeral(ephemeral), allowedMentions, components, embed, options);
+        var reallyEphemeral = IsEphemeral(ephemeral);
+        if (isDeferred)
+        {
+            await Interaction.FollowupAsync(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
+        }
+        else
+        {
+            await (Interaction).RespondAsync(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
+        }        
+        await SaveHistory(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
+    }
+
+    protected async Task RespondAsync(ModalBuilder modal)
+    {
+        await Interaction.RespondWithModalAsync(modal.Build());
+        await SaveHistory("Responded with modal", null, false, false, null, null, null, null);
+    }
+
+    protected ModalBuilder ModalBuilder(params string[] id) => new ModalBuilder()
+        .WithCustomId(string.Join(":", CommandName.AndThen(id)));
+
+    private async Task SaveHistory(string text, Embed[] embeds, bool isTTS, bool? ephemeral, AllowedMentions allowedMentions, MessageComponent components, Embed embed, RequestOptions options)
+    {
         isResponded = true;
 
         var command = commandString();
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(dbUser, Command.Data.Name, command, response);
+        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal.Data.CustomId, command, response);
 
         IEnumerable<string> responses()
         {
@@ -115,10 +152,11 @@ public abstract class BaseSlashCommand : ISlashCommand
     {
         var commandParams = new List<string>();
 
-        AddOptions(Command.Data.Options);
+        AddCommandOptions(Command?.Data.Options);
+        AddModalOptions(Modal?.Data);
         return string.Join(" ", commandParams);
 
-        void AddOptions(IEnumerable<SocketSlashCommandDataOption> options)
+        void AddCommandOptions(IEnumerable<SocketSlashCommandDataOption> options)
         {
             if (options == null)
             {
@@ -127,14 +165,32 @@ public abstract class BaseSlashCommand : ISlashCommand
 
             foreach (var option in options)
             {
-                var o = option.Name;
-                if (!(option.Value?.ToString()).IsNullOrEmpty())
-                {
-                    o += $":{option.Value}";
-                }
+                var o = option.Name + option.Value switch {
+                    null => string.Empty,
+                    IAttachment a => $":{a.Url}",
+                    SocketGuildUser sgu => $":@{sgu.DisplayName()}",
+                    _ when option.Value.ToString().Length == 0 => string.Empty,
+                    _ => $":{option.Value}",
+                };
+
                 commandParams.Add(o);
-                AddOptions(option.Options);
+                AddCommandOptions(option.Options);
             }
+        }
+
+        void AddModalOptions(SocketModalData data)
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            foreach (var option in data.Components)
+            {
+                commandParams.Add($"{option.CustomId}:{option.Value}");
+            }
+
+            
         }
     }
 
@@ -153,20 +209,16 @@ public abstract class BaseSlashCommand : ISlashCommand
             .WithColor(color);
     }
 
-    protected bool IsInARole(IUser user, params ulong[] requiredRoles) => IsInARole(user, (IEnumerable<ulong>) requiredRoles);
-
     protected bool IsInARole(params ulong[] requiredRoles) => IsInARole((IEnumerable<ulong>)requiredRoles);
-    protected bool IsInARole(IEnumerable<ulong> requiredRoles) => IsInARole(Command.User, requiredRoles);
-
-    protected bool IsInARole(IUser user, IEnumerable<ulong> requiredRoles)
+    protected bool IsInARole(IEnumerable<ulong> requiredRoles, params ulong[] moreRoles) => IsInARole(requiredRoles.AndThen(moreRoles).ToHashSet());
+    protected bool IsInARole(ISet<ulong> requiredRoles)
     {
-        if (!(user is SocketGuildUser _user))
+        if (Interaction.User is not SocketGuildUser _user)
         {
             return false;
         }
 
-        var roles = requiredRoles.ToHashSet();
-        return _user.Roles.Select(r => r.Id).Any(roles.Contains);
+        return _user.Roles.Select(r => r.Id).Any(requiredRoles.Contains);
     }
 
     protected IDictionary<string, SocketSlashCommandDataOption> CommandArguments(SocketSlashCommand command)
@@ -179,4 +231,14 @@ public abstract class BaseSlashCommand : ISlashCommand
         return options.ToDictionary(x => x.Name);
     }
 
+    public async Task DoModal(string[] command)
+    {
+        await databaseService.SaveUser(dbUser);
+        await InvokeModal(command);
+    }
+
+    protected virtual Task InvokeModal(string[] command)
+    {
+        return Task.CompletedTask;
+    }
 }
