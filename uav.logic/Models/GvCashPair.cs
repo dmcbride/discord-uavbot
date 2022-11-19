@@ -2,11 +2,43 @@ using System;
 
 namespace uav.logic.Models
 {
-    public class ArkMathService
+    // A pair that represents a galaxy's total value and also the cash on hand
+    public class GvCashPair
     {
         public const double cashArkFactor = 0.0475d;
         public const double gvArkFactor = 0.02295d;
         public const double cashWindfallFactor = 0.1d;
+
+        public readonly GV gv;
+        public readonly GV cash;
+
+        public GvCashPair(GV gv, GV cash)
+        {
+            this.gv = gv;
+            this.cash = cash;
+        }
+
+        public static GvCashPair FromNumbers(double gv, double cash)
+        {
+            return new GvCashPair(GV.FromNumber(gv), GV.FromNumber(cash));
+        }
+
+        public int CountArksUntilCrossover()
+        {
+            return CountUntilCrossover(gvArkFactor);
+        }
+
+        public bool IsBeyondCrossover()
+        {
+            return gv * gvArkFactor <= cash * cashArkFactor;
+        }
+
+        public GvCashPair SimulateGrowth(int count, double gvIncomeFactor = gvArkFactor)
+        {
+            var newGv = gv * Math.Pow(1 + gvIncomeFactor, count);
+            var newCash = cash + (newGv - gv);
+            return new GvCashPair(GV.FromNumber(newGv), GV.FromNumber(newCash));
+        }
 
         // The goal is to find the smallest non-negative count of income iterations, until the following is satisfied:
         //
@@ -22,9 +54,11 @@ namespace uav.logic.Models
         // Assumes 0 < gvArkFactor < cashArkFactor
         //
         // For practical purposes, gvIncomeFactor can either be gvArkFactor or cashWindfallFactor
-        public int CountUntilCrossover(double gv, double cash, double gvIncomeFactor = gvArkFactor) {
+        private int CountUntilCrossover(double gvIncomeFactor)
+        {
             // Check if the crossover already has happened without any new income
-            if (IsBeyondCrossover(gv, cash)) {
+            if (IsBeyondCrossover())
+            {
                 return 0;
             }
 
@@ -57,16 +91,6 @@ namespace uav.logic.Models
             var countExponent = Math.Log(goalIncomeMultiplier, 1 + gvIncomeFactor);
 
             return Convert.ToInt32(Math.Ceiling(countExponent));
-        }
-
-        public bool IsBeyondCrossover(double gv, double cash) {
-            return gv * gvArkFactor <= cash * cashArkFactor;
-        }
-
-        public (GV, GV) SimulateGvCashGrowth(double gv, double cash, int count, double gvIncomeFactor = gvArkFactor) {
-            var newGv = gv * Math.Pow(1 + gvIncomeFactor, count);
-            var newCash = cash + (newGv - gv);
-            return (GV.FromNumber(newGv), GV.FromNumber(newCash));
         }
     }
 }
