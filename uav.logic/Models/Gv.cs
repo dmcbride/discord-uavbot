@@ -79,24 +79,42 @@ namespace uav.logic.Models
                 }
                 else if (!suffix.IsNullOrEmpty()) // you tried something else. Don't do that.
                 {
+                    var allowedSuffixes = $"Suffixes are allowed to be one of: {string.Join(",", recommendedSuffixes)}";
                     if (suffixExponent.TryGetValue(suffix.ToLowerInvariant(), out _) ||
                         suffixExponent.TryGetValue(suffix.ToUpperInvariant(), out _))
                     {
-                        errorMessage = $"Perhaps you got the case wrong. Suffixes are allowed to be one of: {string.Join(",", recommendedSuffixes)}.";
+                        errorMessage = $"Perhaps you got the case wrong. {allowedSuffixes}.";
+                    }
+                    else
+                    {
+                        errorMessage = $"Perhaps you misspelled a letter. {allowedSuffixes}.";
                     }
                     return false;
                 }
-                gv = new GV(qty);
-                return true;
             }
             else if ((m = ExpNumber.Match(v)).Success)
             {
                 qty = Double.Parse(FixComma(m.Groups["qty"].Value));
                 qty *= Math.Pow(10d, Double.Parse(FixComma(m.Groups["exp"].Value)));
-                gv = new GV(qty);
-                return true;
             }
-            return false;
+            else
+            {
+                return false;
+            }
+
+            if (!Double.IsFinite(qty))
+            {
+                errorMessage = "CAREFUL! The money amount is too high, and it will likely irreversibly bug out IPM.";
+                return false;
+            }
+            if (qty < 1.0 && qty != 0.0)
+            {
+                errorMessage = "The money amount is too low to mean anything reasonable in IPM.";
+                return false;
+            }
+
+            gv = new GV(qty);
+            return true;
         }
 
         public int TierNumber => Exponential - 6;
@@ -104,6 +122,11 @@ namespace uav.logic.Models
   
         private static (string letter, string exp) ToStrings(double qty)
         {
+            if (qty == 0.0)
+            {
+                return (null, "0");
+            }
+
             var powerOf10 = (int) Math.Floor(Math.Log10(qty));
             var powerOf1000 = powerOf10 / 3;
 
@@ -131,6 +154,16 @@ namespace uav.logic.Models
 
         public static implicit operator double(GV gv) => gv.gv;
 
+        public static bool operator <(GV a, GV b) => a.gv < b.gv;
+        public static bool operator >(GV a, GV b) => a.gv > b.gv;
+        public static bool operator <=(GV a, GV b) => a.gv <= b.gv;
+        public static bool operator >=(GV a, GV b) => a.gv >= b.gv;
+
+        public static GV operator +(GV a, GV b) => new GV(a.gv + b.gv);
+        public static GV operator -(GV a, GV b) => new GV(a.gv - b.gv);
+        public static GV operator *(GV a, double b) => new GV(a.gv * b);
+        public static GV operator *(double a, GV b) => new GV(a * b.gv);
+
         public int CreditTier() => (int)Math.Floor(Math.Log10(gv)) - 7;
 
         public (double min, double max) TierRange()
@@ -138,5 +171,5 @@ namespace uav.logic.Models
             var tier = Math.Floor(Math.Log10(gv));
             return (Math.Pow(10d, tier), Math.Pow(10d, Math.Min(tier + 1, Credits.MaxTier)));
         }
-   }
+    }
 }

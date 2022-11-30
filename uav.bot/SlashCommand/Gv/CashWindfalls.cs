@@ -34,20 +34,21 @@ public class CashWindfalls : BaseGvSlashCommand
         var gv = (string)options["current-gv"].Value;
         var goalGv = (string)options["target-gv"].Value;
 
-        if (!GV.TryFromString(gv, out var gvValue, out var error) ||
+        if (!GvCash.TryFromStrings(gv, "0", out var initial, out var error) ||
             !GV.TryFromString(goalGv, out var goalGvValue, out error))
         {
-            return RespondAsync($"Invalid input. Usage: `!cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
+            return RespondAsync($"Invalid input. Usage: `/cw currentGV goalGV`{(error != null ? $"\n{error}" : string.Empty)}", ephemeral: true);
         }
 
-        if (goalGvValue < gvValue)
+        if (goalGvValue < initial.gv)
         {
             return RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
         }
 
-        var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
+        var final = initial.CashWindfallUntilGv(goalGvValue, out var cws);
+
         var dmRequired = cws * 30;
-        var message = @$"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
+        var message = @$"To get to a GV of {goalGvValue} from {initial.gv}, you need {ZeroOrMoreCash(cws, "boost")} which will take you to {final.gv}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
 
 {Support.SupportStatement}";
         var embed = new EmbedBuilder()
