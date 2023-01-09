@@ -50,9 +50,9 @@ public partial class DatabaseService
     public async Task<Hint> GetHint(IDbUser u, string hintName)
     {
         using var connect = Connect;
-        var parameters = new {u.User_Id, hintName};
+        var parameters = new {u?.User_Id, hintName};
         return (await connect.QueryAsync<Hint>(
-            @"SELECT * FROM hints WHERE user_id = @User_Id AND hint_name = @hintName",
+            @"SELECT * FROM hints WHERE (@User_Id IS NULL OR user_id = @User_Id) AND hint_name = @hintName ORDER BY CASE WHEN user_id = @User_Id THEN 0 ELSE 1 END LIMIT 1",
             parameters
         )).SingleOrDefault();
     }

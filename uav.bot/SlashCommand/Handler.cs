@@ -26,6 +26,8 @@ namespace uav.bot.SlashCommand
             _client.Ready += OnClientReady;
             _client.SlashCommandExecuted += SlashCommandHandler;
             _client.ModalSubmitted += ModalSubmittedHandler;
+            _client.SelectMenuExecuted += SelectMenuSubmittedHandler;
+            _client.ButtonExecuted += SelectMenuSubmittedHandler;
 
             _commands = source
                 .GetTypes()
@@ -100,6 +102,23 @@ namespace uav.bot.SlashCommand
             {
                 command = command.Skip(1).ToArray();
                 await slashCommand.DoModal(command);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to invoke {command}: {e}");
+            }
+        }
+
+        private async Task SelectMenuSubmittedHandler(SocketMessageComponent componentCommand)
+        {
+            var command = componentCommand.Data.CustomId.Split(':');
+            var type = _commands[command[0]];
+            var slashCommand = (ISlashCommand)Activator.CreateInstance(type);
+            slashCommand.Component = componentCommand;
+
+            try
+            {
+                await slashCommand.DoComponent(new ReadOnlyMemory<string>(command).Slice(1));
             }
             catch (Exception e)
             {

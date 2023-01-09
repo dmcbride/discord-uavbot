@@ -28,9 +28,9 @@ public class SchedulerTests
         public override string Name => "Name!";
         public int calls = 0;
 
-        public override DateTimeOffset NextJobTime()
+        public override Task<DateTimeOffset?> NextJobTime()
         {
-            return DateTimeOffset.UtcNow.AddSeconds(60);
+            return Task.FromResult(DateTimeOffset.UtcNow.AddSeconds(60) as DateTimeOffset?);
         }
 
         public override Task Run()

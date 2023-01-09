@@ -24,11 +24,17 @@ namespace uav
 
             var config = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers &
+                GatewayIntents = (
+                    GatewayIntents.AllUnprivileged |
+                    GatewayIntents.GuildMembers |
+                    GatewayIntents.GuildMessages |
+                    GatewayIntents.MessageContent
+                    ) &
                     // but we don't use these, so don't listen for them.
                     ~(GatewayIntents.GuildInvites | GatewayIntents.GuildScheduledEvents),
                 AlwaysDownloadUsers = true,
                 UseInteractionSnowflakeDate = false,
+                MessageCacheSize = 100,
             };
 
             _client = new DiscordSocketClient(config);
@@ -45,6 +51,7 @@ namespace uav
             var jobScheduler = new Scheduler();
             jobScheduler.AddJob(new bot.Jobs.Tournament(_client));
             jobScheduler.AddJob(new bot.Jobs.Leaderboards(_client));
+            jobScheduler.AddJob(new bot.Jobs.Poll(_client));
 
             await _client.LoginAsync(TokenType.Bot, secret);
             await _client.StartAsync();

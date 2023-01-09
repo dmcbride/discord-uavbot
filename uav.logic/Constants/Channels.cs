@@ -50,6 +50,7 @@ public static class Channels
     }
 
     public const ulong LoungeOffTopic = 536532203203461122ul;
+    public const ulong MessageLog = 887273315528474634ul;
 
     private static HashSet<ulong> _participationChannels;
     public static ISet<ulong> ParticipationChannels

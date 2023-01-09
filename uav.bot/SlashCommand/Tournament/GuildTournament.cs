@@ -19,6 +19,7 @@ public class GuildTournament : BaseTournamentSlashCommand
             .WithDescription("Admin cleanup on aisle 4!")
             .WithType(ApplicationCommandOptionType.SubCommand)
             .AddOption("really", ApplicationCommandOptionType.Boolean, "Are you really sure?", isRequired: true)
+            // cspell: disable-next-line
             .AddOption("no-really", ApplicationCommandOptionType.Boolean, "NOnono, I mean REALLY sure?", isRequired: true)
         )
         .AddOption(new SlashCommandOptionBuilder()
@@ -240,8 +241,8 @@ public class GuildTournament : BaseTournamentSlashCommand
 
     private GuildMessage[] guildMessages = {
         new (DayOfWeek.Tuesday, "Final submissions due in {0}!"),
-        new (DayOfWeek.Friday, $"Sign up by hitting the emoji in <#900801095788527616>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.\n\nSignups close in {{0}}!", new TimeOnly(12, 0)),
-        new (DayOfWeek.Saturday, "Signups are closed, hope you've signed up! Tournament will start in {0}."),
+        new (DayOfWeek.Friday, $"Sign up by hitting the emoji in <#900801095788527616>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.\n\nSign ups close in {{0}}!", new TimeOnly(12, 0)),
+        new (DayOfWeek.Saturday, "Sign ups are closed, hope you've signed up! Tournament will start in {0}."),
         new (DayOfWeek.Sunday, "Tournaments have started! {0} left to start or begin your guild group."),
     };
 
@@ -253,10 +254,10 @@ public class GuildTournament : BaseTournamentSlashCommand
             Roles.AllMods, Roles.GuildHelper
         );
 
-        var msg = guildMessages.NextOccuring(now);
+        var msg = guildMessages.NextOccurring(now);
         var nextTime = msg.NextTime(now);
 
-        var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
+        var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime.Value - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
 
         return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }

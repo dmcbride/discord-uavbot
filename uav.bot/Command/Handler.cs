@@ -170,5 +170,5 @@ namespace uav.Command
                 _ = message.Channel.SendMessageAsync($"{message.Author.Mention} got rank **{rank}**");
             }
         }
-    }
+   }
 }

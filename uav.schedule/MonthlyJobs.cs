@@ -16,15 +16,15 @@ public abstract class MonthlyJobs : Job
 
     private JobDescription NextJobDescription()
     {
-        return jobDescriptions.NextOccuring(Now);
+        return jobDescriptions.NextOccurring(Now);
     }
 
-    public override DateTimeOffset NextJobTime()
+    public override Task<DateTimeOffset?> NextJobTime()
     {
         var now = Now;
         var nextJob = NextJobDescription();
 
-        return nextJob.NextTime(now);
+        return Task.FromResult(nextJob.NextTime(now));
     }
 
     private JobDescription ThisJobDescription()

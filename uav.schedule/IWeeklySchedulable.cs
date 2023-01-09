@@ -56,7 +56,7 @@ public static class IWeeklySchedulableExtensions
         return false;
     }
 
-    public static DateTime NextTime(this IWeeklySchedulable job, DateTime now)
+    public static DateTimeOffset? NextTime(this IWeeklySchedulable job, DateTime now)
     {
         var nextTime = now.Date.AddDays(job.Day - now.DayOfWeek);
         if (job.Time != null)
@@ -70,7 +70,7 @@ public static class IWeeklySchedulableExtensions
         return nextTime;
     }
 
-    public static T NextOccuring<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
+    public static T NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
     {
         T firstJob = default;
         bool foundFirst = false;

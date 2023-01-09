@@ -5,7 +5,7 @@ namespace uav.Schedule;
 
 public interface IJob
 {
-    public TimeSpan NextJob();
+    public Task<TimeSpan?> NextJob();
 
     public Task Run();
 
@@ -18,13 +18,17 @@ public abstract class Job : IJob
     {
     }
 
-    public virtual TimeSpan NextJob()
+    public virtual async Task<TimeSpan?> NextJob()
     {
-        var nextJobTime = NextJobTime();
-        return nextJobTime.ToUniversalTime() - DateTimeOffset.UtcNow;
+        var nextJobTime = await NextJobTime();
+        if (nextJobTime == null)
+        {
+            return null;
+        }
+        return nextJobTime.Value.ToUniversalTime() - DateTimeOffset.UtcNow;
     }
 
-    public abstract DateTimeOffset NextJobTime();
+    public abstract Task<DateTimeOffset?> NextJobTime();
 
     public abstract Task Run();
 

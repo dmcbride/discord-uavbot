@@ -96,7 +96,6 @@ SELECT * FROM (
         var where = $"WHERE NOT oopsed AND ({string.Join(" OR ", queries)})";
 
         var sql = $"SELECT * FROM ark_value {where}";
-        //Console.WriteLine(sql);
 
         var values = await connection.QueryAsync<ArkValue>(sql);
         await connection.ExecuteAsync($"UPDATE ark_value SET oopsed = 1 {where}");

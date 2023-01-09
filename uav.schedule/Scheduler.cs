@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Timers;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace uav.Schedule;
 
@@ -25,7 +26,7 @@ public class Scheduler
         jobs.Add(ji);
         if (started)
         {
-            StartJob(ji);
+            _ = StartJob(ji);
         }
     }
 
@@ -34,15 +35,19 @@ public class Scheduler
         started = true;
         foreach (var job in jobs)
         {
-            StartJob(job);
+            _ = StartJob(job);
         }
     }
 
-    private void StartJob(JobInfo job)
+    private async Task StartJob(JobInfo job)
     {
-        var nextTime = job.job.NextJob();
+        var nextTime = await job.job.NextJob();
+        if (nextTime == null)
+        {
+            return;
+        }
         Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {nextTime} (setup: {job.job.Name})");
-        var timeToNext = nextTime.TotalMilliseconds;
+        var timeToNext = nextTime.Value.TotalMilliseconds;
         job.timer = new Timer(timeToNext);
         job.timer.Elapsed += async (Object source, ElapsedEventArgs e) => {
             Console.WriteLine($"{DateTimeOffset.Now} - Starting job {job.job.Name}");
@@ -57,7 +62,7 @@ public class Scheduler
             Console.WriteLine($"{DateTimeOffset.Now} - Completed job {job.job.Name}");
             job.timer.Dispose();
 
-            StartJob(job);
+            _ = StartJob(job);
         };
         job.timer.AutoReset = false;
         job.timer.Enabled = true;

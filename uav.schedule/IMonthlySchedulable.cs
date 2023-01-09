@@ -94,12 +94,12 @@ public static class IMonthlySchedulableExtensions
         return false;
     }
 
-    public static DateTime NextTime(this IMonthlySchedulable job, DateTime now)
+    public static DateTimeOffset? NextTime(this IMonthlySchedulable job, DateTime now)
     {
         return job.NextTime(now);
     }
 
-    public static T NextOccuring<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
+    public static T NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
     {
         T nextJob = default;
         var foundAny = false;

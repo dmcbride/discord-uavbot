@@ -1,9 +1,11 @@
 using System;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using uav.bot.Attributes;
 using uav.logic.Constants;
 using uav.logic.Database;
 using uav.logic.Database.Model;
@@ -11,7 +13,7 @@ using uav.logic.Extensions;
 
 namespace uav.bot.SlashCommand;
 
-public abstract class BaseSlashCommand : ISlashCommand
+public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<ComponentHandlerAttribute>
 {
     protected readonly DatabaseService databaseService = new DatabaseService();
 
@@ -23,7 +25,10 @@ public abstract class BaseSlashCommand : ISlashCommand
 
     public SocketSlashCommand Command { protected get; set; }
     protected string SubCommandName => Command.Data.Options.First().Name;
-    protected SocketInteraction Interaction => Command as SocketInteraction ?? Modal;
+    protected SocketInteraction Interaction =>
+        Command as SocketInteraction ??
+        Modal ??
+        Component as SocketInteraction;
     
     public SocketGuildUser User => Interaction.User as SocketGuildUser;
     private IDbUser _dbUser;
@@ -85,8 +90,8 @@ public abstract class BaseSlashCommand : ISlashCommand
         }
         else
         {
-            await (Interaction).RespondAsync(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
-        }        
+            await Interaction.RespondAsync(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
+        }
         await SaveHistory(text, embeds, isTTS, reallyEphemeral, allowedMentions, components, embed, options);
     }
 
@@ -107,7 +112,7 @@ public abstract class BaseSlashCommand : ISlashCommand
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal.Data.CustomId, command, response);
+        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component.Data.CustomId, command, response);
 
         IEnumerable<string> responses()
         {
@@ -154,6 +159,7 @@ public abstract class BaseSlashCommand : ISlashCommand
 
         AddCommandOptions(Command?.Data.Options);
         AddModalOptions(Modal?.Data);
+        AddComponentOptions(Component?.Data);
         return string.Join(" ", commandParams);
 
         void AddCommandOptions(IEnumerable<SocketSlashCommandDataOption> options)
@@ -189,8 +195,16 @@ public abstract class BaseSlashCommand : ISlashCommand
             {
                 commandParams.Add($"{option.CustomId}:{option.Value}");
             }
+        }
 
-            
+        void AddComponentOptions(SocketMessageComponentData data)
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            commandParams.Add($"{data.CustomId}:{data.Value}");
         }
     }
 
@@ -234,11 +248,101 @@ public abstract class BaseSlashCommand : ISlashCommand
     public async Task DoModal(string[] command)
     {
         await databaseService.SaveUser(dbUser);
-        await InvokeModal(command);
+        try
+        {
+            await InvokeModal(command);
+        }
+        catch(Exception e)
+        {
+            if (!isResponded)
+            {
+                await RespondAsync($"Something went wrong. Please contact Tanktalus", ephemeral: true);
+                var channel = await Guild.GetUser(410138719295766537).CreateDMChannelAsync();
+                // send me a private message
+                await channel.SendMessageAsync(
+                    $"Error occurred with modal using command {string.Join(":", command)}",
+                    embed: new EmbedBuilder().WithTitle("error").WithDescription(e.ToString()).Build()
+                    );
+            }
+        }
     }
 
     protected virtual Task InvokeModal(string[] command)
     {
         return Task.CompletedTask;
     }
+
+    public SocketMessageComponent Component { get; set; }
+
+    public async Task DoComponent(ReadOnlyMemory<string> command)
+    {
+        await databaseService.SaveUser(dbUser);
+        try
+        {
+            await InvokeComponent(command);
+        }
+        catch (Exception e)
+        {
+            if (!isResponded)
+            {
+                await RespondAsync($"Something went wrong. Please contact Tanktalus", ephemeral: true);
+                var channel = await Guild.GetUser(410138719295766537).CreateDMChannelAsync();
+                // send me a private message
+                await channel.SendMessageAsync(
+                    $"Error occurred with component using command {string.Join(":", command)}",
+                    embed: new EmbedBuilder().WithTitle("error").WithDescription($"```\n{e.ToString()}\n```").Build()
+                    );
+                Console.Error.WriteLine($"Error occurred with component using command {string.Join(":", command)}\n\n{e}");
+            }
+        }
+    }
+
+    protected virtual Task InvokeComponent(ReadOnlyMemory<string> command)
+    {
+        return (this as ICommandHandler<ComponentHandlerAttribute>).RunCommand(command);
+    }
+}
+
+public abstract class BaseSlashCommandWithSubcommands : BaseSlashCommand
+{
+    public override Task Invoke(SocketSlashCommand command)
+    {
+        var firstOption = command.Data.Options.First();
+        var options = CommandArguments(firstOption.Options);
+        var subcommand = firstOption.Name;
+        if (!Subcommands.TryGetValue(subcommand, out var subcommandMethod))
+        {
+            throw new Exception($"Subcommand {subcommand} not found");
+        }
+
+        return subcommandMethod.Invoke(options);
+    }
+
+    public abstract IDictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>>
+        Subcommands { get; }
+
+    private static MemoryCache _cache => MemoryCache.Default;
+
+    protected ModalBuilder ModalBuilder(string command, object data)
+    {
+        var key = string.Join(":", new[] {command, User.Id.ToString(), Guid.NewGuid().ToString()});
+        _cache.Add(key, data, DateTimeOffset.Now.AddMinutes(60));
+        return ModalBuilder(key);
+    }
+
+    protected override Task InvokeModal(string[] command)
+    {
+        var modal = command[0];
+        if (!ModalSubcommands.TryGetValue(modal, out var modalMethod))
+        {
+            throw new Exception($"Modal {modal} not found");
+        }
+
+        var data = _cache.Get(string.Join(":", command));
+        var options = Modal.Data.Components.ToDictionary(c => c.CustomId, c => (IComponentInteractionData)c);
+
+        return modalMethod.Invoke(command.Skip(1).ToArray(), data, options);
+    }
+
+    protected virtual IDictionary<string, Func<string[], object, IDictionary<string, IComponentInteractionData>, Task>> ModalSubcommands { get; } = new Dictionary<string, Func<string[], object, IDictionary<string, IComponentInteractionData>, Task>>();
 }

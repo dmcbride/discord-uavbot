@@ -10,6 +10,7 @@ public static class UserExtensions
     {
         SocketGuildUser _u;
         SocketWebhookUser _wu;
+        SocketUser _su;
         public DbUser(SocketGuildUser u)
         {
             _u = u;
@@ -18,14 +19,18 @@ public static class UserExtensions
         {
             _wu = u;
         }
+        public DbUser(SocketUser u)
+        {
+            _su = u;
+        }
 
-        public ulong User_Id => _u?.Id ?? _wu.Id;
+        public ulong User_Id => _u?.Id ?? _wu?.Id ?? _su.Id;
 
-        public string User_Name => _u?.Username ?? _wu.Username;
+        public string User_Name => _u?.Username ?? _wu?.Username ?? _su.Username;
 
         public string User_Nick => _u?.Nickname ?? null;
 
-        public IEnumerable<SocketRole> Roles => _u.Roles ?? Enumerable.Empty<SocketRole>();
+        public IEnumerable<SocketRole> Roles => _u?.Roles ?? Enumerable.Empty<SocketRole>();
     }
 
     public static IDbUser ToDbUser(this SocketGuildUser u) => new DbUser(u);
@@ -36,7 +41,8 @@ public static class UserExtensions
     public static IDbUser ToDbUser(this SocketUser u) => u switch {
         SocketGuildUser sgu => new DbUser(sgu),
         SocketWebhookUser swu => new DbUser(swu),
-        _ => throw new System.Exception(),
+        SocketUser sgu => new DbUser(sgu),
+        _ => throw new System.Exception($"Unknown user type {u.GetType().Name}"),
     };
 
     public static string DisplayName(this SocketGuildUser u) => u.Nickname ?? u.Username;

@@ -141,14 +141,15 @@ public class Hint : BaseSlashCommand
 
     private async Task GetHint(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var user = (SocketUser)options.GetOrDefault("user")?.Value ?? User;
+        var user = (SocketUser)options.GetOrDefault("user")?.Value;
         var shortcut = (string)options["shortcut"].Value;
-        var hint = await databaseService.GetHint(user.ToDbUser(), shortcut);
+        var hint = await databaseService.GetHint(user?.ToDbUser(), shortcut);
         if (hint == null)
         {
-            await RespondAsync($"No hint found from {user.Mention} called {shortcut}", ephemeral: true);
+            await RespondAsync($"No hint found from {user?.Mention ?? "anyone"} called {shortcut}", ephemeral: true);
             return;
         }
+        user ??= Guild.GetUser(hint.UserId);
         var embed = new EmbedBuilder()
             .WithTitle(hint.Title)
             .WithDescription($"{hint.HintText}\n\nby {user.Mention}")

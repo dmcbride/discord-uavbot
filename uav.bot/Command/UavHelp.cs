@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -42,9 +43,16 @@ namespace uav.Command
 
         [Command("uav")]
         [Summary("List UAV commands")]
-        public Task Help()
+        public async Task Help()
         {
-            return ReplyAsDMAsync(HelpText);
+            try
+            {
+                await ReplyAsDMAsync(HelpText);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
     }

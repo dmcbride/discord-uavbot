@@ -44,5 +44,10 @@ namespace uav.logic.Extensions
                 (source[i], source[swap]) = (source[swap], source[i]);
             }
         }
+
+        public static IEnumerable<T> NaturalOrderBy<T>(this IEnumerable<T> source, Func<T, string> selector)
+        {
+            return source.OrderBy(selector, new NaturalStringComparer());
+        }
     }
 }
