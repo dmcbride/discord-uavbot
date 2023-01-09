@@ -33,5 +33,11 @@ namespace uav.test
             GV.TryFromString("10M", out var gv, out var msg);
             Assert.AreEqual(1, gv.TierNumber);
         }
+
+        [TestMethod]
+        public void Zero()
+        {
+            Assert.AreEqual("0", GV.Zero.ToString());
+        }
     }
 }
