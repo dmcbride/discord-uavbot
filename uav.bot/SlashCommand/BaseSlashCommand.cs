@@ -23,18 +23,18 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     public virtual Task<SlashCommandBuilder> CommandBuilderAsync =>
         Task.FromResult(CommandBuilder);
 
-    public SocketSlashCommand Command { protected get; set; }
-    protected string SubCommandName => Command.Data.Options.First().Name;
+    public SocketSlashCommand? Command { protected get; set; }
+    protected string? SubCommandName => Command?.Data.Options.First().Name;
     protected SocketInteraction Interaction =>
         Command as SocketInteraction ??
         Modal ??
-        Component as SocketInteraction;
+        (SocketInteraction)Component!;
     
-    public SocketGuildUser User => Interaction.User as SocketGuildUser;
-    private IDbUser _dbUser;
+    public SocketGuildUser User => (SocketGuildUser)Interaction.User;
+    private IDbUser? _dbUser;
     protected IDbUser dbUser => _dbUser ??= User.ToDbUser();
 
-    public SocketGuild Guild => User.Guild;
+    public SocketGuild? Guild => User.Guild;
 
     public async Task DoCommand()
     {
@@ -62,7 +62,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             Channels.LongHaulersGang,
     };
 
-    public SocketModal Modal { protected get; set; }
+    public SocketModal? Modal { protected get; set; }
 
     private bool isDeferred = false;
     protected async Task DeferAsync(bool? ephemeral = null)
@@ -81,7 +81,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     }
 
     private bool isResponded = false;
-    protected async Task RespondAsync(string text = null, Embed[] embeds = null, bool isTTS = false, bool? ephemeral = null, AllowedMentions allowedMentions = null, MessageComponent components = null, Embed embed = null, RequestOptions options = null)
+    protected async Task RespondAsync(string? text = null, Embed[]? embeds = null, bool isTTS = false, bool? ephemeral = null, AllowedMentions? allowedMentions = null, MessageComponent? components = null, Embed? embed = null, RequestOptions? options = null)
     {
         var reallyEphemeral = IsEphemeral(ephemeral);
         if (isDeferred)
@@ -104,7 +104,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     protected ModalBuilder ModalBuilder(params string[] id) => new ModalBuilder()
         .WithCustomId(string.Join(":", CommandName.AndThen(id)));
 
-    private async Task SaveHistory(string text, Embed[] embeds, bool isTTS, bool? ephemeral, AllowedMentions allowedMentions, MessageComponent components, Embed embed, RequestOptions options)
+    private async Task SaveHistory(string? text, Embed[]? embeds, bool isTTS, bool? ephemeral, AllowedMentions? allowedMentions, MessageComponent? components, Embed? embed, RequestOptions? options)
     {
         isResponded = true;
 
@@ -112,9 +112,9 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component.Data.CustomId, command, response);
+        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component!.Data.CustomId, command, response);
 
-        IEnumerable<string> responses()
+        IEnumerable<string?> responses()
         {
             // all the options we might have as a response.
             yield return text;
@@ -126,7 +126,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             yield return "No response given";
         }
 
-        string embedToResponse(Embed e)
+        string? embedToResponse(Embed? e)
         {
             if (e is null)
             {
@@ -135,11 +135,11 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
             var sb = new StringBuilder();
             sb.AppendLine(e.Description);
-            sb.AppendJoin("\n", e?.Fields.Select(f => string.Join("\n", f.Name, f.Value)));
+            sb.AppendJoin("\n", e.Fields.Select(f => string.Join("\n", f.Name, f.Value)));
 
             return sb.ToString();
         }
-        string embedsToResponse(IEnumerable<Embed> embeds)
+        string? embedsToResponse(IEnumerable<Embed?>? embeds)
         {
             if (embeds is null)
             {
@@ -147,7 +147,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             }
 
             var sb = new StringBuilder();
-            sb.AppendJoin("\n", embeds.Select(e => embedToResponse(e)));
+            sb.AppendJoin("\n", embeds.Select(e => embedToResponse(e)).Where(x => x is not null));
 
             return sb.ToString();
         }
@@ -162,7 +162,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
         AddComponentOptions(Component?.Data);
         return string.Join(" ", commandParams);
 
-        void AddCommandOptions(IEnumerable<SocketSlashCommandDataOption> options)
+        void AddCommandOptions(IEnumerable<SocketSlashCommandDataOption>? options)
         {
             if (options == null)
             {
@@ -175,7 +175,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
                     null => string.Empty,
                     IAttachment a => $":{a.Url}",
                     SocketGuildUser sgu => $":@{sgu.DisplayName()}",
-                    _ when option.Value.ToString().Length == 0 => string.Empty,
+                    _ when option.Value.ToString()!.Length == 0 => string.Empty,
                     _ => $":{option.Value}",
                 };
 
@@ -184,7 +184,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             }
         }
 
-        void AddModalOptions(SocketModalData data)
+        void AddModalOptions(SocketModalData? data)
         {
             if (data == null)
             {
@@ -197,7 +197,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             }
         }
 
-        void AddComponentOptions(SocketMessageComponentData data)
+        void AddComponentOptions(SocketMessageComponentData? data)
         {
             if (data == null)
             {
@@ -210,7 +210,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
     public virtual async Task Invoke()
     {
-        await Invoke(Command);
+        await Invoke(Command!);
     }
 
     public abstract Task Invoke(SocketSlashCommand command);
@@ -257,7 +257,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             if (!isResponded)
             {
                 await RespondAsync($"Something went wrong. Please contact Tanktalus", ephemeral: true);
-                var channel = await Guild.GetUser(410138719295766537).CreateDMChannelAsync();
+                var channel = await Guild!.GetUser(410138719295766537).CreateDMChannelAsync();
                 // send me a private message
                 await channel.SendMessageAsync(
                     $"Error occurred with modal using command {string.Join(":", command)}",
@@ -272,7 +272,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
         return Task.CompletedTask;
     }
 
-    public SocketMessageComponent Component { get; set; }
+    public SocketMessageComponent? Component { get; set; }
 
     public async Task DoComponent(ReadOnlyMemory<string> command)
     {
@@ -286,7 +286,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             if (!isResponded)
             {
                 await RespondAsync($"Something went wrong. Please contact Tanktalus", ephemeral: true);
-                var channel = await Guild.GetUser(410138719295766537).CreateDMChannelAsync();
+                var channel = await Guild!.GetUser(410138719295766537).CreateDMChannelAsync();
                 // send me a private message
                 await channel.SendMessageAsync(
                     $"Error occurred with component using command {string.Join(":", command)}",
@@ -339,7 +339,7 @@ public abstract class BaseSlashCommandWithSubcommands : BaseSlashCommand
         }
 
         var data = _cache.Get(string.Join(":", command));
-        var options = Modal.Data.Components.ToDictionary(c => c.CustomId, c => (IComponentInteractionData)c);
+        var options = Modal!.Data.Components.ToDictionary(c => c.CustomId, c => (IComponentInteractionData)c);
 
         return modalMethod.Invoke(command.Skip(1).ToArray(), data, options);
     }

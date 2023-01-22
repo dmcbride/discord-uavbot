@@ -18,7 +18,7 @@ public class WeeklyJobsTests
             J(DayOfWeek.Saturday, "3"),
         };
 
-        public string LastAction { get; private set; }
+        public string? LastAction { get; private set; }
         private Func<Task> A(string action)
         {
             return () => {

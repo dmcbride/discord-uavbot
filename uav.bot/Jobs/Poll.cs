@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using uav.logic.Constants;
 using uav.logic.Database;
 using uav.Schedule;
 
@@ -12,7 +13,7 @@ public class Poll : Job
 {
     private readonly DatabaseService _databaseService = new DatabaseService();
     private readonly DiscordSocketClient _client;
-    private logic.Database.Model.Poll _nextPoll;
+    private logic.Database.Model.Poll? _nextPoll;
 
     public Poll(DiscordSocketClient client)
     {
@@ -67,6 +68,19 @@ public class Poll : Job
                         .Build()
                 );
             });
+
+        // send a message to the channel with the detailed results
+        await _client.GetGuild(_nextPoll.GuildId).GetTextChannel(Channels.DiscordServerNews).SendMessageAsync(
+            @$"Poll ID ""{_nextPoll.PollUserKey}"" has ended! If you'd like to look at past polls or vote in open polls check out {MentionUtils.MentionChannel(_nextPoll.ChannelId)} There you can also click on ""Detailed Results"" to see the breakdown of how everyone voted.",
+            embed: new Discord.EmbedBuilder()
+                .WithFooter($"Poll ID: {_nextPoll.PollUserKey} (poll {_nextPoll.PollId})")
+                .WithTimestamp(_nextPoll.EndDate)
+                .WithDescription(_nextPoll.Description)
+                .WithColor(Discord.Color.Red)
+                .AddField("Number of Users Participating", usersParticipating, true)
+                .AddField("Results", $"```{GetPollResultsString(pollResults, pollValues)}\n```", false)
+                .Build()
+        );
     }
 
     private static string GetPollResultsString(IEnumerable<DatabaseService.PollResults> pollResults, IDictionary<int, string> pollValues)

@@ -1,16 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using uav.Command;
+﻿using uav;
 
-namespace uav
 {
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
-            var uav = new UAV();
+    var uav = new UAV();
 
-            await uav.Start(args).ConfigureAwait(false);
-        }
-    }
+    await uav.Start(args).ConfigureAwait(false);
 }

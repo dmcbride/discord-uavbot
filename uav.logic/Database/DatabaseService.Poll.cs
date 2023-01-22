@@ -79,7 +79,7 @@ partial class DatabaseService
         return await connect.QueryFirstOrDefaultAsync<Poll>(query, new { poll_user_key = userKey, guild_id = guildId });
     }
 
-    public async Task<bool> VotePoll(Poll poll, ulong userId, IReadOnlyCollection<string> votes)
+    public async Task<(bool votedPreviously, int voteCount)> VotePoll(Poll poll, ulong userId, IReadOnlyCollection<string> votes)
     {
         using var connect = Connect;
         // first, try to find the user's vote(s) and delete them.
@@ -99,14 +99,21 @@ partial class DatabaseService
                 @poll_id,
                 @user_id,
                 @vote
-            )";
+            );";
 
         await connect.ExecuteAsync(query, votes.Select(vote => new { poll_id = poll.PollId, user_id = userId, vote }));
 
-        return rows > 0; // return true if the user had already voted
+        // then get the number of votes
+        query = @"
+            SELECT COUNT(DISTINCT user_id) FROM poll_votes
+            WHERE poll_id = @poll_id;";
+
+        var voteCount = await connect.QuerySingleAsync<int>(query, new { poll_id = poll.PollId });
+
+        return (rows > 0, voteCount); // return true if the user had already voted
     }
 
-    public async Task<Poll> GetNextExpiringPoll()
+    public async Task<Poll?> GetNextExpiringPoll()
     {
         using var connect = Connect;
         var query = @"

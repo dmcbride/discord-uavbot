@@ -16,18 +16,18 @@ public class ExtractPlayerId
     }
 
     private Regex playerIdExtractor = new Regex(@"Player\s*ID:\s*(?<id>\S+)", RegexOptions.Singleline);
-    private string[] sharpens = new[] {
+    private string?[] sharpens = new[] {
         null,
         "0x4",
         "0x8",
     };
-    public async Task<string> Extract(string file)
+    public async Task<string?> Extract(string file)
     {
         foreach (var sharpen in sharpens)
         {
             var text = await Tesseract.RunTesseract(file, sharpen);
 
-            var m = playerIdExtractor.Match(text);
+            var m = playerIdExtractor.Match(text ?? string.Empty);
             if (m.Success)
             {
                 var id = m.Groups["id"].Value;

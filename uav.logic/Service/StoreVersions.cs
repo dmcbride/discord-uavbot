@@ -8,8 +8,8 @@ namespace uav.logic.Service
 {
     public class StoreVersions
     {
-        private DatabaseService databaseService;
-        private static HttpClient client;
+        //private DatabaseService databaseService;
+        private static HttpClient? client;
 
         public async IAsyncEnumerable<string> UpdatedVersions(IEnumerable<LatestStoreVersion> versions)
         {

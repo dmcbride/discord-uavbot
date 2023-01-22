@@ -33,7 +33,7 @@ public class Stats : BaseSlashCommand
 
     public async Task StarredRoles(SocketSlashCommand command,  IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var starredRoles = Guild.Roles.Where(r => r.Name.Contains("🌟"));
+        var starredRoles = Guild!.Roles.Where(r => r.Name.Contains("🌟"));
 
         var roleCountByUser = new Dictionary<ulong, uint>();
         var usersById = new Dictionary<ulong, SocketGuildUser>();

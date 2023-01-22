@@ -36,10 +36,10 @@ public class Arks : CommandBase
     [Usage("currentGV [baseCredits [gv2 credits2] ...] ")]
     public async Task BaseCredits(params string[] parameters)
     {
-        GV gvValue;
+        GV? gvValue;
         {
-            string error = null;
-            if (parameters.Length == 0 || !GV.TryFromString(parameters[0], out gvValue, out error))
+            string? error = null;
+            if (parameters.Length == 0 || !GV.TryFromString(parameters[0], out gvValue, out error) || gvValue == null)
             {
                 await ReplyAsync($"Invalid input. Usage: `!basecred currentGV [baseCredits ...]`{(error != null ? $"\n{error}" : string.Empty)}");
                 return;

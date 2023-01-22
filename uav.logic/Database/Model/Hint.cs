@@ -8,11 +8,11 @@ public class Hint : IDapperMappedType
     [Description("user_id")]
     public ulong UserId { get; set; }
     [Description("hint_name")]
-    public string HintName { get; set; }
+    public string? HintName { get; set; }
     [Description("title")]
-    public string Title { get; set; }
+    public string? Title { get; set; }
     [Description("hint_text")]
-    public string HintText { get; set; }
+    public string? HintText { get; set; }
 
     [Description("created")]
     public DateTimeOffset Created { get; set; }
@@ -25,7 +25,7 @@ public class Hint : IDapperMappedType
         Updated = DateTimeOffset.Now;
     }
 
-    public Hint(IDbUser dbUser, string hintName = null) : this()
+    public Hint(IDbUser dbUser, string? hintName = null) : this()
     {
         UserId = dbUser.User_Id;
         HintName = hintName;

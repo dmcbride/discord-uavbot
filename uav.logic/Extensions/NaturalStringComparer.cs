@@ -4,10 +4,24 @@ namespace uav.logic.Extensions
 {
     internal class NaturalStringComparer : IComparer<object>
     {
-        public int Compare(object x, object y)
+        public int Compare(object? x, object? y)
         {
-            var xStr = x.ToString();
-            var yStr = y.ToString();
+            var xStr = x?.ToString();
+            var yStr = y?.ToString();
+
+            if (xStr is null && yStr is null)
+            {
+                return 0;
+            }
+            else if (xStr is null)
+            {
+                return -1;
+            }
+            else if (yStr is null)
+            {
+                return 1;
+            }
+
             var xLen = xStr.Length;
             var yLen = yStr.Length;
             var xIndex = 0;

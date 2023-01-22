@@ -80,7 +80,7 @@ public class Hint : BaseSlashCommand
     {
         var shortcut = (string)options["shortcut"].Value;
 
-        var hint = await databaseService.GetHint(Command.User.ToDbUser(), shortcut);
+        var hint = await databaseService.GetHint(Command!.User.ToDbUser(), shortcut);
         var shortcutId = Guid.NewGuid().ToString();
         _modalCache.Add(shortcutId, shortcut, CacheItemPolicy);
 
@@ -96,7 +96,7 @@ public class Hint : BaseSlashCommand
     private async Task RemoveHint(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
         var shortcut = (string)options["shortcut"].Value;
-        var hint = await databaseService.GetHint(Command.User.ToDbUser(), shortcut);
+        var hint = await databaseService.GetHint(Command!.User.ToDbUser(), shortcut);
         if (hint == null)
         {
             await RespondAsync($"No hint found for {shortcut}");
@@ -141,7 +141,7 @@ public class Hint : BaseSlashCommand
 
     private async Task GetHint(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var user = (SocketUser)options.GetOrDefault("user")?.Value;
+        var user = options.GetOrDefault("user")?.Value as SocketUser;
         var shortcut = (string)options["shortcut"].Value;
         var hint = await databaseService.GetHint(user?.ToDbUser(), shortcut);
         if (hint == null)
@@ -149,14 +149,14 @@ public class Hint : BaseSlashCommand
             await RespondAsync($"No hint found from {user?.Mention ?? "anyone"} called {shortcut}", ephemeral: true);
             return;
         }
-        user ??= Guild.GetUser(hint.UserId);
+        user ??= Guild!.GetUser(hint.UserId);
         var embed = new EmbedBuilder()
             .WithTitle(hint.Title)
             .WithDescription($"{hint.HintText}\n\nby {user.Mention}")
             .Build();
         
         // for now, only show registered-users' hints. Probably should use a different role for this.
-        var ephemeral = !Guild.GetUser(user.Id).Roles.Select(r => r.Id).Any(id => id == Roles.GameRegistered);
+        var ephemeral = !Guild!.GetUser(user.Id).Roles.Select(r => r.Id).Any(id => id == Roles.GameRegistered);
         await RespondAsync(embed: embed, ephemeral: ephemeral);
     }
 
@@ -183,7 +183,7 @@ public class Hint : BaseSlashCommand
             return;
         }
 
-        var options = Modal.Data.Components.ToDictionary(c => c.CustomId, c => c);
+        var options = Modal!.Data.Components.ToDictionary(c => c.CustomId, c => c);
         var title = options["title"].Value;
         var text = options["hint-text"].Value;
 
@@ -193,6 +193,6 @@ public class Hint : BaseSlashCommand
         _modalCache.Remove(shortcutId);
 
         var updateMsg = $"{User.Mention} added a hint for `{shortcut}`:\n\n----\n{text}\n----\n\nIf this is not okay, you can remove it with `/admin remove-user-hint`";
-        _ = Guild.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg);
+        _ = Guild!.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg);
     }
 }

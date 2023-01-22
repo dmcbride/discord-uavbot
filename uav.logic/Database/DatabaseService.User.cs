@@ -8,8 +8,13 @@ namespace uav.logic.Database;
 
 partial class DatabaseService
 {
-    public async Task SaveUser(IDbUser u)
+    public async Task SaveUser(IDbUser? u)
     {
+        if (u is null)
+        {
+            return;
+        }
+        
         using var connection = Connect;
 
         var is_mod = u.Roles.Select(r => r.Id).Any(Roles.AllMods.Contains);

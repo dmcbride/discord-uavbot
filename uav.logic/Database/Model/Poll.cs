@@ -12,8 +12,8 @@ public class Poll : IDapperMappedType
     public ulong GuildId { get; set; }
     public ulong ChannelId { get; set; }
     public ulong MsgId { get; set; }
-    public string PollUserKey { get; set; }
-    public string Description { get; set; }
+    public string? PollUserKey { get; set; }
+    public string? Description { get; set; }
     public int MaxOptions { get; set; }
     public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset EndDate { get; set; }
@@ -26,14 +26,15 @@ public class Poll : IDapperMappedType
         public List<Option> Options { get; set; }
     }
 
-    public EmbedBuilder ToEmbedded(IDictionary<int, int> votes = null)
+    public EmbedBuilder ToEmbedded(int voters = 0)
     {
         var eb = new EmbedBuilder()
             .WithFooter($"Poll ID: {PollUserKey}")
             .WithTimestamp(CreatedDate)
             .WithColor(Color.Blue)
             .AddField("Poll Question", Description)
-            .AddField("Poll End Date", EndDate.ToString("yyyy-MM-dd HH:mm:ss"))
+            .AddField("Number of Users Participating", voters, true)
+            .AddField("Poll End Date", EndDate.ToString("yyyy-MM-dd HH:mm:ss zzz"))
             ;
 
         return eb;

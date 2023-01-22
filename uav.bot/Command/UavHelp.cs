@@ -22,7 +22,7 @@ namespace uav.Command
         private static string CommandName(MethodInfo m)
         {
             var command = m.GetCustomAttribute<CommandAttribute>();
-            return command.Text;
+            return command!.Text;
         }
 
         private static (string Summary, string Usage, RequiredRoleAttribute[] RequiredRoles) CommandHelp(MethodInfo m)

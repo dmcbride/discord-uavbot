@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 using uav.logic.Extensions;
@@ -25,7 +26,7 @@ namespace uav.logic.Models
                 }.Concat(Enumerable.Range((int)'a', (int)'m' - (int)'a' + 1).Select(i => "a" + (char)i))
                 .ToList();
             var s = recommendedSuffixes
-                .Select((s, i) => (s, i: 3*(i+1)))
+                .Select((s, i) => (s, i: 3 * (i + 1)))
                 .ToDictionary(k => k.s, k => k.i);
             toSuffixExponent = s.ToDictionary(kv => kv.Value, kv => kv.Key); // reverse lookup
             s["m"] = s["M"];
@@ -44,10 +45,10 @@ namespace uav.logic.Models
         {
             return new GV(gv);
         }
-        
+
         public static GV FromString(string v)
         {
-            if (!TryFromString(v, out var GV, out var errorMessage))
+            if (!TryFromString(v, out var GV, out var errorMessage) || GV is null)
             {
                 throw new Exception(errorMessage);
             }
@@ -56,7 +57,7 @@ namespace uav.logic.Models
 
         public static GV Zero = FromNumber(0);
 
-        public static bool TryFromString(string v, out GV gv, out string errorMessage)
+        public static bool TryFromString(string v, [NotNullWhen(true)] out GV? gv, [NotNullWhen(false)] out string? errorMessage)
         {
             errorMessage = null;
 
@@ -84,6 +85,10 @@ namespace uav.logic.Models
                     {
                         errorMessage = $"Perhaps you got the case wrong. Suffixes are allowed to be one of: {string.Join(",", recommendedSuffixes)}.";
                     }
+                    else
+                    {
+                        errorMessage = $"Suffixes are allowed to be one of: {string.Join(",", recommendedSuffixes)}.";
+                    }
                     return false;
                 }
                 gv = new GV(qty);
@@ -96,18 +101,19 @@ namespace uav.logic.Models
                 gv = new GV(qty);
                 return true;
             }
+            errorMessage = "Not a valid number.";
             return false;
         }
 
         public int TierNumber => Exponential - 6;
         public int Exponential => (int)Math.Floor(Math.Log10(gv));
   
-        private static (string letter, string exp) ToStrings(double qty)
+        private static (string? letter, string exp) ToStrings(double qty)
         {
             var powerOf10 = (int) Math.Floor(Math.Log10(qty));
             var powerOf1000 = powerOf10 / 3;
 
-            string letter = null;
+            string? letter = null;
             if (powerOf1000 == 0)
             {
                 letter = $"{qty:g5}";

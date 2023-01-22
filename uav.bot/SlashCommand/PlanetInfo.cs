@@ -66,7 +66,7 @@ public class PlanetInfo : BaseSlashCommand
             await RespondAsync(@$"Unknown planet name ""{name}"".", ephemeral: true);
         }
 
-        await RespondAsync(embed: EmbedForPlanet(planet));
+        await RespondAsync(embed: EmbedForPlanet(planet!));
     }
 
     private async Task ById(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
@@ -87,11 +87,11 @@ public class PlanetInfo : BaseSlashCommand
         await RespondAsync(embeds: embeds);
     }
 
-    private Embed EmbedForPlanet(logic.Database.Model.PlanetInfo planet)
+    private Embed EmbedForPlanet(logic.Database.Model.PlanetInfo? planet)
     {
         var ores = new List<string>();
 
-        if (planet.Ore1 is not null)
+        if (planet!.Ore1 is not null)
         {ores.Add($"{planet.Ore1} ({planet.Ore1Yield}%)");}
 
         if (planet.Ore2 is not null)

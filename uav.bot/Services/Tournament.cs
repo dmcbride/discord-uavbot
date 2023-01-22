@@ -31,11 +31,11 @@ public class Tournament
         _guild = guild.ValidateNotNull(nameof(guild));
     }
 
-    private SocketGuild _guild;
+    private SocketGuild? _guild;
     private SocketGuild Guild =>
-        _guild ??= _client.GetGuild(523911528328724502ul);
+        _guild ??= _client!.GetGuild(523911528328724502ul);
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordSocketClient? _client;
 
     public IEnumerable<(SocketGuildUser user, bool permanent)> TournamentContestants()
     {

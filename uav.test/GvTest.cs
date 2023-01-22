@@ -15,7 +15,7 @@ namespace uav.test
         {
             var parsed = GV.TryFromString(v, out var gv, out var msg);
             Assert.IsTrue(parsed);
-            StringAssert.Contains(gv.ToString(), v);
+            StringAssert.Contains(gv!.ToString(), v);
         }
 
         [DataTestMethod]
@@ -24,14 +24,14 @@ namespace uav.test
         {
             var parsed = GV.TryFromString(v, out var gv, out var msg);
             Assert.IsTrue(parsed);
-            StringAssert.Contains(gv.ToString(), expected);
+            StringAssert.Contains(gv!.ToString(), expected);
         }
 
         [TestMethod]
         public void Tier()
         {
             GV.TryFromString("10M", out var gv, out var msg);
-            Assert.AreEqual(1, gv.TierNumber);
+            Assert.AreEqual(1, gv!.TierNumber);
         }
     }
 }

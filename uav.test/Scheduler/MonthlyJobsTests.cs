@@ -22,7 +22,7 @@ public class MonthlyJobsTests
             J(-2, "4", new TimeOnly(12, 0)), // 29th
         };
 
-        public string LastAction { get; private set; }
+        public string? LastAction { get; private set; }
         private Func<Task> A(string action)
         {
             return () => {

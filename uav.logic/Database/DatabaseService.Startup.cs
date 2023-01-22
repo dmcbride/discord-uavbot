@@ -64,9 +64,9 @@ partial class DatabaseService
 
     public class JsonTypeHandler : SqlMapper.ITypeHandler
     {
-        public object Parse(Type destinationType, object value)
+        public object? Parse(Type destinationType, object value)
         {
-            return JsonSerializer.Deserialize(value as string, destinationType);
+            return JsonSerializer.Deserialize((string)value, destinationType);
         }
 
         public void SetValue(IDbDataParameter parameter, object value)
@@ -80,7 +80,7 @@ partial class DatabaseService
     {
         public override DateTimeOffset Parse(object value)
         {
-            return DateTimeOffset.Parse(value.ToString());
+            return DateTimeOffset.Parse(value.ToString() ?? string.Empty);
         }
 
         public override void SetValue(IDbDataParameter parameter, DateTimeOffset value)

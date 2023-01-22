@@ -16,7 +16,7 @@ public abstract class WeeklyJobs : Job
 
     private JobDescription NextJobDescription()
     {
-        return jobDescriptions.NextOccurring(Now);
+        return jobDescriptions.NextOccurring(Now)!;
     }
 
     public override Task<DateTimeOffset?> NextJobTime()

@@ -15,8 +15,8 @@ public class IpmUpdate : IDisposable
 
     private const int everyHours = 6;
     private DiscordSocketClient _client;
-    private Timer _timer;
-    private SocketTextChannel updateChannel;
+    private Timer? _timer;
+    private SocketTextChannel? updateChannel;
 
     public IpmUpdate(DiscordSocketClient client)
     {
@@ -43,7 +43,7 @@ public class IpmUpdate : IDisposable
         };
     }
 
-    private void OnTimedEvent(Object source, ElapsedEventArgs e)
+    private void OnTimedEvent(Object? source, ElapsedEventArgs e)
     {
         Console.WriteLine("Replace me with actual checking.");
     }

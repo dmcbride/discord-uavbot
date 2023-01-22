@@ -126,18 +126,18 @@ public class GuildTournament : BaseTournamentSlashCommand
             return;
         }
 
-        var service = new Services.Tournament((command.User as SocketGuildUser).Guild);        
+        var service = new Services.Tournament(((SocketGuildUser)command.User).Guild);        
 
         _ = Task.Run(service.SelectTeams);
 
         await RespondAsync("Teams are being selected.", ephemeral: true);
     }
 
-    private async Task RemoveRoleFromEveryone(SocketRole role)
+    private async Task RemoveRoleFromEveryone(SocketRole? role)
     {
-        foreach (var user in role.Members)
+        foreach (var user in role?.Members ?? Enumerable.Empty<SocketGuildUser>())
         {
-            await user.RemoveRoleAsync(role.Id);
+            await user.RemoveRoleAsync(role!.Id);
         }
     }
 
@@ -168,7 +168,7 @@ public class GuildTournament : BaseTournamentSlashCommand
         async Task ActualCleanup()
         {
             // start with clearing the old roles
-            await RemoveRoleFromEveryone(_guild.GetRole(Roles.GuildAccessRole));
+            await RemoveRoleFromEveryone(_guild!.GetRole(Roles.GuildAccessRole));
             foreach (var teamRole in Roles.GuildTeams.Select(_guild.GetRole))
             {
                 await RemoveRoleFromEveryone(teamRole);
@@ -201,7 +201,7 @@ public class GuildTournament : BaseTournamentSlashCommand
     private async Task SetWinstreakLion(SocketSlashCommand command)
     {
         var options = CommandArguments(command.Data.Options.First().Options);
-        var user = options["user"].Value as SocketGuildUser;
+        var user = (SocketGuildUser)options["user"].Value;
         var add = (bool)options["add"];
 
         var nick = user.DisplayName;
@@ -215,7 +215,7 @@ public class GuildTournament : BaseTournamentSlashCommand
 
     private async Task Contestants(SocketSlashCommand command)
     {
-        var _guild = (command.User as IGuildUser)?.Guild as SocketGuild;
+        var _guild = (SocketGuild)(command.User as IGuildUser)?.Guild!;
         var _tournament = new Services.Tournament(_guild);
 
         var users = _tournament.TournamentContestants().ToArray();
@@ -255,9 +255,9 @@ public class GuildTournament : BaseTournamentSlashCommand
         );
 
         var msg = guildMessages.NextOccurring(now);
-        var nextTime = msg.NextTime(now);
+        var nextTime = msg!.NextTime(now)!;
 
-        var embed = EmbedBuilder("Tournament Guild", string.Format(msg.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime.Value - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
+        var embed = EmbedBuilder("Tournament Guild", string.Format(msg!.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime.Value - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
 
         return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }
@@ -287,9 +287,9 @@ public class GuildTournament : BaseTournamentSlashCommand
         }
 
         var options = CommandArguments(command.Data.Options.First().Options);
-        var user = options["user"].Value as SocketGuildUser;
+        var user = (SocketGuildUser)options["user"].Value;
         var winCount = (int)(long)options["win-count"].Value;
-        var userRoles = user?.Roles.Select(r => r.Id).ToHashSet();
+        var userRoles = user.Roles.Select(r => r.Id).ToHashSet();
 
         await RespondAsync($"Setting user {user.DisplayName} to have role for {winCount} wins");
 

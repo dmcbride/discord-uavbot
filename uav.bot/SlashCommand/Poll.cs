@@ -28,18 +28,32 @@ public class Poll : BaseSlashCommandWithSubcommands
                     )
                     .WithType(ApplicationCommandOptionType.SubCommand)
             )
+            .AddOption(
+                new SlashCommandOptionBuilder()
+                    .WithName("view")
+                    .WithDescription("View a poll")
+                    .AddOption(
+                        new SlashCommandOptionBuilder()
+                            .WithName("id")
+                            .WithDescription("Unique ID for the poll")
+                            .WithRequired(true)
+                            .WithType(ApplicationCommandOptionType.String)
+                    )
+                    .WithType(ApplicationCommandOptionType.SubCommand)
+            )
             ;
 
     public override IDictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>> Subcommands =>
     new Dictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>> {
             ["create"] = Create,
+            ["view"] = View,
         };
 
     private async Task Create(IDictionary<string, SocketSlashCommandDataOption> options)
     {
         var id = (string)options["id"].Value;
 
-        var existingPoll = await databaseService.GetPollByUserKey(id, Guild.Id);
+        var existingPoll = await databaseService.GetPollByUserKey(id, Guild!.Id);
         if (existingPoll is not null)
         {
             // don't support for now.
@@ -58,10 +72,36 @@ public class Poll : BaseSlashCommandWithSubcommands
             .AddTextInput("Poll Duration (in days)", "length", value: defaultDuration)
             .AddTextInput("Max options users can select", "max-options", value: defaultMaxOptions)
             .AddTextInput($"Options (one per line) (Max: {maxOptions})", "options", TextInputStyle.Paragraph, value: defaultOptions)
-            //.AddComponents()
             ;
         
         await RespondAsync(mb);
+    }
+
+    private async Task View(IDictionary<string, SocketSlashCommandDataOption> options)
+    {
+        var id = (string)options["id"].Value;
+
+        var poll = await databaseService.GetPollByUserKey(id, Guild!.Id);
+        if (poll is null)
+        {
+            await RespondAsync($"Poll {id} not found", ephemeral: true);
+            return;
+        }
+
+        var details = await databaseService.GetDetailedPollResults(poll.PollId);
+        var usersVoted = details.SelectMany(d => d.users).DistinctBy(u => u.User_Id).ToArray();
+        var totalVotes = details.Sum(d => d.users.Length);
+
+        await RespondAsync(
+            embed: new EmbedBuilder()
+                .WithTitle($"Poll: {poll.Description}")
+                .WithDescription($"Poll ID: {poll.PollUserKey}")
+                .AddField("End Date", poll.EndDate.ToString("yyyy-MM-dd HH:mm:ss zzz"))
+                .AddField("Total Votes", totalVotes)
+                .AddField($"{usersVoted.Length} Users Voted", string.Join(Environment.NewLine, usersVoted.Select(u => u.Name())))
+                .Build(),
+            ephemeral: true
+        );
     }
 
     protected override Dictionary<string, Func<string[], object, IDictionary<string, IComponentInteractionData>, Task>> ModalSubcommands => new () {
@@ -127,7 +167,7 @@ public class Poll : BaseSlashCommandWithSubcommands
             Options = new uav.logic.Database.Model.Poll.OptionsType{
                 Options = optionsList,
             },
-            GuildId = Modal.GuildId ?? 0,
+            GuildId = Modal!.GuildId ?? 0,
         };
 
         await databaseService.CreatePoll(poll);
@@ -148,24 +188,29 @@ public class Poll : BaseSlashCommandWithSubcommands
             await RespondAsync("Invalid poll id", ephemeral: true);
             return;
         }
-        var poll = await databaseService.GetPoll(pollId, Guild.Id);
+        var poll = await databaseService.GetPoll(pollId, Guild!.Id);
         if (poll == null)
         {
             await RespondAsync("Poll not found", ephemeral: true);
             return;
         }
         var userId = Interaction.User.Id;
-        var values = Component.Data.Values;
+        var values = Component!.Data.Values;
         var pollValues = poll.Options.Options.ToDictionary(o => o.Id.ToString(), o => o);
         var userSelectedValues = values.NaturalOrderBy(v => v).Select(v => pollValues[v].Text).ToList();
-        var votedPreviously = await databaseService.VotePoll(poll, userId, values);
+        var voteResults = await databaseService.VotePoll(poll, userId, values);
         
-        var response = votedPreviously switch {
+        var response = voteResults.votedPreviously switch {
             true => $"Replaced your old vote with your new vote: {string.Join(",", userSelectedValues)}. You can now dismiss this message.",
             false => $"Registered your vote for {string.Join(", ", userSelectedValues)}. You can now dismiss this message.",
         };
 
         await RespondAsync(response, ephemeral: true);
+
+        // update the message
+        await Interaction.Channel.ModifyMessageAsync(poll.MsgId, p => {
+           p.Embed = poll.ToEmbedded(voteResults.voteCount).Build();
+        });
     }
 
     [ComponentHandler("results")]
@@ -176,7 +221,7 @@ public class Poll : BaseSlashCommandWithSubcommands
             await RespondAsync("Invalid poll id", ephemeral: true);
             return;
         }
-        var poll = await databaseService.GetPoll(pollId, Guild.Id);
+        var poll = await databaseService.GetPoll(pollId, Guild!.Id);
         if (poll == null)
         {
             await RespondAsync("Poll not found", ephemeral: true);

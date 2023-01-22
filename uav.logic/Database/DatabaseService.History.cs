@@ -8,7 +8,7 @@ namespace uav.logic.Database;
 
 partial class DatabaseService
 {
-    public async Task AddHistory(IDbUser u, string command, string options, string response)
+    public async Task AddHistory(IDbUser u, string command, string? options, string? response)
     {
         using var connect = Connect;
 

@@ -9,7 +9,7 @@ namespace uav.logic.Service;
 
 public class Tesseract
 {
-    public static async Task<string> RunTesseract(string file, string sharpen = null)
+    public static async Task<string?> RunTesseract(string file, string? sharpen = null)
     {
         byte[] data;
         if (file.StartsWith("http"))
@@ -34,14 +34,14 @@ public class Tesseract
         return await ReadAllBytesAsync(fs);
     }
 
-    public static async Task<string> RunTesseract(byte[] data, string sharpen = null)
+    public static async Task<string?> RunTesseract(byte[] data, string? sharpen = null)
     {
         sharpen = sharpen == null ? string.Empty : $" -sharpen {sharpen}";
         await RunBinarySubprocess("/usr/bin/convert", $"- -alpha off{sharpen} -negate -", data, async (r) => {
             data = await ReadAllBytesAsync(r.BaseStream);
         });
 
-        string results = null;
+        string? results = null;
         await RunBinarySubprocess("/usr/bin/tesseract", "- -", data, async (r) => {
             results = await r.ReadToEndAsync();
         });
@@ -49,7 +49,7 @@ public class Tesseract
         return results;
     }
 
-    private static async Task RunBinarySubprocess(string filename, string arguments, byte[] data, Func<StreamReader, Task> handleOutput, Func<StreamReader, Task> handleError = null)
+    private static async Task RunBinarySubprocess(string filename, string arguments, byte[] data, Func<StreamReader, Task> handleOutput, Func<StreamReader, Task>? handleError = null)
     {
         handleError ??= (reader) => reader.ReadToEndAsync();
 

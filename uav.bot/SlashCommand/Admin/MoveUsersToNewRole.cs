@@ -23,7 +23,7 @@ public class MoveUsersToNewRole : BaseAdminSlashCommand
 #pragma warning disable 4014
         Task.Run(async () => {
             var role = (command.User as IGuildUser)?.Guild.GetRole(fromRole.Id) as SocketRole; // Guild Access Role
-            var users = role?.Members.ToArray();
+            var users = role?.Members.ToArray() ?? Enumerable.Empty<IGuildUser>();
 
             foreach (var user in users)
             {

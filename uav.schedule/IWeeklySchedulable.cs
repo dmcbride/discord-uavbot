@@ -70,9 +70,9 @@ public static class IWeeklySchedulableExtensions
         return nextTime;
     }
 
-    public static T NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
+    public static T? NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
     {
-        T firstJob = default;
+        T? firstJob = default;
         bool foundFirst = false;
         foreach(var job in jobs)
         {
@@ -94,9 +94,9 @@ public static class IWeeklySchedulableExtensions
         return firstJob;
     }
 
-    public static T LastOccurred<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
+    public static T? LastOccurred<T>(this ICollection<T> jobs, DateTime now) where T : IWeeklySchedulable
     {
-        T firstJob = default;
+        T? firstJob = default;
         bool foundFirst = false;
         foreach(var job in jobs.Reverse())
         {

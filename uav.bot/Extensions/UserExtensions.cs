@@ -8,9 +8,9 @@ public static class UserExtensions
 {
     private class DbUser : IDbUser
     {
-        SocketGuildUser _u;
-        SocketWebhookUser _wu;
-        SocketUser _su;
+        SocketGuildUser? _u;
+        SocketWebhookUser? _wu;
+        SocketUser? _su;
         public DbUser(SocketGuildUser u)
         {
             _u = u;
@@ -24,11 +24,11 @@ public static class UserExtensions
             _su = u;
         }
 
-        public ulong User_Id => _u?.Id ?? _wu?.Id ?? _su.Id;
+        public ulong User_Id => _u?.Id ?? _wu?.Id ?? _su!.Id;
 
-        public string User_Name => _u?.Username ?? _wu?.Username ?? _su.Username;
+        public string User_Name => _u?.Username ?? _wu?.Username ?? _su!.Username;
 
-        public string User_Nick => _u?.Nickname ?? null;
+        public string? User_Nick => _u?.Nickname ?? null;
 
         public IEnumerable<SocketRole> Roles => _u?.Roles ?? Enumerable.Empty<SocketRole>();
     }

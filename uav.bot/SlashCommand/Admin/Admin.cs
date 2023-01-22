@@ -82,7 +82,7 @@ public class Admin : BaseAdminSlashCommand
 
     private async Task PlayerId(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var users = Enumerable.Range(1,5).Select(i => $"user{i}").Select(u => options.GetOrDefault(u, null)?.Value)
+        var users = Enumerable.Range(1,5).Select(i => $"user{i}").Select(u => options!.GetOrDefault(u, null)?.Value)
             .Cast<SocketGuildUser>()
             .Where(x => x != null);
         

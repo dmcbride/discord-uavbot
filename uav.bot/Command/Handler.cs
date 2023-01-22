@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -163,7 +162,7 @@ namespace uav.Command
             if (!message.Attachments.Any(x => isImageUrl.IsMatch(x.Url))) return;
             var text = await Tesseract.RunTesseract(message.Attachments.First(x => isImageUrl.IsMatch(x.Url)).Url);
 
-            var m = RankExtractor.Match(text);
+            var m = RankExtractor.Match(text ?? string.Empty);
             if (m.Success)
             {
                 var rank = m.Groups["rank"].Value;

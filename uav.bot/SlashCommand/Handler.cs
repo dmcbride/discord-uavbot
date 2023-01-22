@@ -18,6 +18,13 @@ namespace uav.bot.SlashCommand
         {
             _client = client;
 
+            _commands = source
+                .GetTypes()
+                .Where(t => typeof(ISlashCommand).IsAssignableFrom(t) && !t.IsAbstract)
+                .Select(t => Activator.CreateInstance(t))
+                .Cast<ISlashCommand>()
+                .ToDictionary(sc => sc.CommandName, sc => sc.GetType());
+
             Setup(source);
         }
 
@@ -28,12 +35,6 @@ namespace uav.bot.SlashCommand
             _client.ModalSubmitted += ModalSubmittedHandler;
             _client.SelectMenuExecuted += SelectMenuSubmittedHandler;
             _client.ButtonExecuted += SelectMenuSubmittedHandler;
-
-            _commands = source
-                .GetTypes()
-                .Where(t => typeof(ISlashCommand).IsAssignableFrom(t) && !t.IsAbstract)
-                .Select(t => (ISlashCommand)Activator.CreateInstance(t))
-                .ToDictionary(sc => sc.CommandName, sc => sc.GetType());
         }
 
         public Task OnClientReady()
@@ -44,9 +45,9 @@ namespace uav.bot.SlashCommand
             async Task InternalClientReady() {
                 try {
                     var commands = new List<SlashCommandProperties>();
-                    foreach (var type in _commands.Values)
+                    foreach (var type in _commands!.Values)
                     {
-                        var obj = (ISlashCommand)Activator.CreateInstance(type);
+                        var obj = (ISlashCommand)Activator.CreateInstance(type)!;
                         commands.Add((await obj.CommandBuilderAsync)
                             .WithName(obj.CommandName)
                             .WithDefaultPermission(true)
@@ -55,10 +56,9 @@ namespace uav.bot.SlashCommand
                 
                     foreach (var guild in _client.Guilds)
                     {
-                        object x = null;
                         try
                         {
-                            x = await _client.Rest.BulkOverwriteGuildCommands(commands.ToArray(), guild.Id).ConfigureAwait(false);
+                            var x = await _client.Rest.BulkOverwriteGuildCommands(commands.ToArray(), guild.Id).ConfigureAwait(false);
                         }
                         catch (HttpException exception)
                         {
@@ -78,8 +78,8 @@ namespace uav.bot.SlashCommand
         {
             if (!_commands.TryGetValue(command.Data.Name, out var commandType))
                 return;
-            var slashCommand = (ISlashCommand)Activator.CreateInstance(commandType);
-            slashCommand.Command = command;
+            var slashCommand = Activator.CreateInstance(commandType) as ISlashCommand;
+            slashCommand!.Command = command;
 
             try
             {
@@ -95,8 +95,8 @@ namespace uav.bot.SlashCommand
         {
             var command = arg.Data.CustomId.Split(':');
             var type = _commands[command[0]];
-            var slashCommand = (ISlashCommand)Activator.CreateInstance(type);
-            slashCommand.Modal = arg;
+            var slashCommand = Activator.CreateInstance(type) as ISlashCommand;
+            slashCommand!.Modal = arg;
 
             try
             {
@@ -113,8 +113,8 @@ namespace uav.bot.SlashCommand
         {
             var command = componentCommand.Data.CustomId.Split(':');
             var type = _commands[command[0]];
-            var slashCommand = (ISlashCommand)Activator.CreateInstance(type);
-            slashCommand.Component = componentCommand;
+            var slashCommand = Activator.CreateInstance(type) as ISlashCommand;
+            slashCommand!.Component = componentCommand;
 
             try
             {

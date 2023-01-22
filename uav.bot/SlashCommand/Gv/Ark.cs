@@ -47,7 +47,7 @@ public class Ark : BaseGvSlashCommand
         var options = CommandArguments(command);
         var gv = (string)options["current-gv"].Value;
         var goalGv = (string)options["target-gv"].Value;
-        var cash = (string)options.GetOrDefault("coh", null)?.Value ?? gv;
+        var cash = (string?)options.GetOrDefault("coh", null)?.Value ?? gv;
         var hoursPerDay = (long?)options.GetOrDefault("hours-per-day", null)?.Value;
 
         if (!GV.TryFromString(gv, out var gvValue, out var error) ||

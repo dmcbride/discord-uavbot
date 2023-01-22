@@ -11,7 +11,7 @@ namespace uav.logic.Database;
 
 public partial class DatabaseService
 {
-    private string connectionString = Environment.GetEnvironmentVariable("uav_dbConnection");
+    private string? connectionString = Environment.GetEnvironmentVariable("uav_dbConnection");
     private MySqlConnection Connect => new MySqlConnection(connectionString);
 
     public async Task<(int atThisCredit, int inTier)> AddArkValue(ArkValue v, double tierMin, double tierMax, IDbUser user)

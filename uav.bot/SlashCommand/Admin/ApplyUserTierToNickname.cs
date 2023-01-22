@@ -67,11 +67,11 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
     protected override async Task InvokeAdminCommand(SocketSlashCommand command)
     {
         var options = CommandArguments(command);
-        var user = options["user"].Value as IGuildUser;
+        var user = (IGuildUser)options["user"].Value;
         var startingName = user.Nickname ?? user.Username;
-        var gvString = (string)options.GetOrDefault("best-gv", null)?.Value;
+        var gvString = (string?)options.GetOrDefault("best-gv", null)?.Value;
         var sales = (long?)options.GetOrDefault("sales", null)?.Value;
-        var pet = (string)options.GetOrDefault("pet", null)?.Value;
+        var pet = (string?)options.GetOrDefault("pet", null)?.Value;
         
         var nick = startingName;
 
@@ -138,7 +138,7 @@ public class ApplyUserTierToNickname : BaseAdminSlashCommand
             return;
         }
 
-        await (user as SocketGuildUser).ModifyAsync(x => x.Nickname = nick);
+        await ((SocketGuildUser)user).ModifyAsync(x => x.Nickname = nick);
         await RespondAsync($"Set nickname to `{nick}`, was `{startingName}`", ephemeral: true);
     }
 }

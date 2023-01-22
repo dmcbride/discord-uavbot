@@ -9,8 +9,8 @@ public class Scheduler
 {
     private class JobInfo
     {
-        public IJob job;
-        public Timer timer;
+        public IJob? job;
+        public Timer? timer;
     }
     private List<JobInfo> jobs = new List<JobInfo>();
     private bool started = false;
@@ -41,7 +41,7 @@ public class Scheduler
 
     private async Task StartJob(JobInfo job)
     {
-        var nextTime = await job.job.NextJob();
+        var nextTime = await job.job!.NextJob();
         if (nextTime == null)
         {
             return;
@@ -49,7 +49,7 @@ public class Scheduler
         Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {nextTime} (setup: {job.job.Name})");
         var timeToNext = nextTime.Value.TotalMilliseconds;
         job.timer = new Timer(timeToNext);
-        job.timer.Elapsed += async (Object source, ElapsedEventArgs e) => {
+        job.timer.Elapsed += async (Object? source, ElapsedEventArgs e) => {
             Console.WriteLine($"{DateTimeOffset.Now} - Starting job {job.job.Name}");
             
             try {

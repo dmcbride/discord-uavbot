@@ -99,9 +99,9 @@ public static class IMonthlySchedulableExtensions
         return job.NextTime(now);
     }
 
-    public static T NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
+    public static T? NextOccurring<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
     {
-        T nextJob = default;
+        T? nextJob = default;
         var foundAny = false;
         // we have to do the sort because a job day of "-3" could be before the 27th some months and after the 27th other months
         var orderedJobs = jobs.OrderBy(j => j.NextTime(now)).ToArray();
@@ -125,9 +125,9 @@ public static class IMonthlySchedulableExtensions
         return nextJob;
     }
 
-    public static T LastOccurred<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
+    public static T? LastOccurred<T>(this ICollection<T> jobs, DateTime now) where T : IMonthlySchedulable
     {
-        T firstJob = default;
+        T? firstJob = default;
         bool foundFirst = false;
         foreach(var job in jobs.Reverse())
         {

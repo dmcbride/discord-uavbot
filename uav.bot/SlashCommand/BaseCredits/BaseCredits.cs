@@ -97,7 +97,7 @@ public class BaseCredits : BaseSlashCommand
         // by this point, we've already validated it once, so we're good.
         GV.TryFromString((string)options["gv"].Value, out var gv, out var _);
         
-        var msg = await arkService.QueryCreditRange(gv);
+        var msg = await arkService.QueryCreditRange(gv!);
 
         await RespondAsync(msg);
         return;

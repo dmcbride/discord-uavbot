@@ -8,7 +8,7 @@ namespace uav.logic.Database;
 
 partial class DatabaseService
 {
-    public async Task<PlanetInfo> PlanetByNumber(int id)
+    public async Task<PlanetInfo?> PlanetByNumber(int id)
     {
         using var connection = Connect;
         var results = await connection.QueryAsync<PlanetInfo>(@"
@@ -19,7 +19,7 @@ partial class DatabaseService
         return results.FirstOrDefault();
     }
 
-    public async Task<PlanetInfo> PlanetByName(string name)
+    public async Task<PlanetInfo?> PlanetByName(string name)
     {
          using var connection = Connect;
         var results = await connection.QueryAsync<PlanetInfo>(@"

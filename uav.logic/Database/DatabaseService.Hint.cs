@@ -47,7 +47,7 @@ public partial class DatabaseService
         );
     }
 
-    public async Task<Hint> GetHint(IDbUser u, string hintName)
+    public async Task<Hint?> GetHint(IDbUser? u, string hintName)
     {
         using var connect = Connect;
         var parameters = new {u?.User_Id, hintName};

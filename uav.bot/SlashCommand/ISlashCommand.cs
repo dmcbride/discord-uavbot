@@ -30,7 +30,7 @@ public interface ICommandHandler<T> where T : CommandHandlerAttribute
 {
     private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> _commandHandlers = new();
     
-    MethodInfo GetCommandHandler(string commandName)
+    MethodInfo? GetCommandHandler(string commandName)
     {
         var type = GetType();
         if (!_commandHandlers.ContainsKey(type))
@@ -52,6 +52,6 @@ public interface ICommandHandler<T> where T : CommandHandlerAttribute
     {
         var method = GetCommandHandler(command.Span[0]);
         if (method == null) return Task.CompletedTask;
-        return (Task)method.Invoke(this, new object[] {command.Slice(1)});
+        return (Task)method.Invoke(this, new object[] {command.Slice(1)})!;
     }
 }
