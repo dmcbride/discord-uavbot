@@ -4,6 +4,7 @@ using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
 using uav.Schedule;
+using log4net;
 
 namespace uav.bot.Jobs;
 
@@ -16,13 +17,15 @@ public class Tournament : WeeklyJobs
 
     protected override ICollection<JobDescription> jobDescriptions { get; }
 
+    private ILog _logger = LogManager.GetLogger(typeof(Tournament));
+
     public Tournament(DiscordSocketClient client)
     {
         _client = client;
         _tournament = new Services.Tournament(_client);
 
         jobDescriptions = new JobDescription[] {
-            new (DayOfWeek.Sunday, "Registration Reminder 1", SendReminder),
+            // new (DayOfWeek.Sunday, "Registration Reminder 1", SendReminder),
             new (DayOfWeek.Monday, "Registration Reminder 2", SendReminder),
             new (DayOfWeek.Tuesday, "Closed Tournament", ClosedTournament),
             //new (DayOfWeek.Wednesday, "Start Registration", StartRegistration),
@@ -34,6 +37,15 @@ public class Tournament : WeeklyJobs
 
     private Task SelectTeams()
     {
+        // for some reason, there is a bug where this gets called on the wrong day somehow.
+        // Check that it's currently Friday.
+        if (DateTime.UtcNow.DayOfWeek != DayOfWeek.Friday)
+        {
+            _logger.Warn("SelectTeams called on the wrong day.");
+            return Task.CompletedTask;
+        }
+
+        _logger.Info("Selecting teams.");
         return _tournament.SelectTeams();
     }
 
@@ -56,7 +68,7 @@ public class Tournament : WeeklyJobs
 Come join the fun!
 Looking for Miners of all levels and tournament brackets!
 
-<#900801095788527616>
+<#{Channels.GuildRules}>
 Use the simple register via emoji option
 {IpmEmoji.ipmtourney} — Full Member Access
 {IpmEmoji.tbdcapitalplanet} — Allows for 1 week team play

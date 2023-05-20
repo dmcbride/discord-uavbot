@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Timers;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using log4net;
 
 namespace uav.Schedule;
 
@@ -14,6 +15,7 @@ public class Scheduler
     }
     private List<JobInfo> jobs = new List<JobInfo>();
     private bool started = false;
+    private static readonly ILog logger = LogManager.GetLogger(typeof(Scheduler));
 
     public Scheduler()
     {
@@ -46,26 +48,31 @@ public class Scheduler
         {
             return;
         }
-        Console.WriteLine($"{DateTimeOffset.Now} - Waiting for {nextTime} (setup: {job.job.Name})");
-        var timeToNext = nextTime.Value.TotalMilliseconds;
-        job.timer = new Timer(timeToNext);
-        job.timer.Elapsed += async (Object? source, ElapsedEventArgs e) => {
-            Console.WriteLine($"{DateTimeOffset.Now} - Starting job {job.job.Name}");
-            
-            try {
-                await job.job.Run();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{DateTimeOffset.Now} - Exception: {ex}");
-            }
-            Console.WriteLine($"{DateTimeOffset.Now} - Completed job {job.job.Name}");
-            job.timer.Dispose();
 
-            _ = StartJob(job);
-        };
-        job.timer.AutoReset = false;
-        job.timer.Enabled = true;
+        logger.Debug($"Waiting for {nextTime} (setup: {job.job.Name})");
+        var timeToNext = (long)nextTime.Value.TotalMilliseconds;
+        job.timer = new Timer(OnTimerElapse, job, timeToNext, Timeout.Infinite);
+    }
+
+    private static async void OnTimerElapse(object? source)
+    {
+        var job = (JobInfo)source!;
+        logger.Debug($"Starting job {job.job!.Name}");
+        try {
+            await job.job!.Run();
+        }
+        catch (Exception ex)
+        {
+            logger.Error($"Exception in job {job.job!.Name}", ex);
+        }
+
+        logger.Debug($"Completed job {job.job!.Name}");
+        var timeToNext = await job.job.NextJob();
+        if (timeToNext == null)
+        {
+            return;
+        }
+        job.timer!.Change((long)timeToNext.Value.TotalMilliseconds, Timeout.Infinite);
     }
 }
 

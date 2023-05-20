@@ -93,7 +93,6 @@ class UAV
         rollingFileAppender.ActivateOptions();
         hierarchy.Root.AddAppender(rollingFileAppender);
 
-        hierarchy.Root.Level = Level.Info;
         hierarchy.Configured = true;
     }
 

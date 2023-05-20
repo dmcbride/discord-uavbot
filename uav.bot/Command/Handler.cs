@@ -74,12 +74,12 @@ namespace uav.Command
             var reactions = null as IEnumerable<Emoji>;
             switch(message.Channel.Id)
             {
-                case Channels.AsteroidPics:
-                    var hasImageAttachments = message.Attachments.Any(a => isImageUrl.IsMatch(a.Url));
-                    if (!hasImageAttachments) return Task.CompletedTask;
+                // case Channels.AsteroidPics:
+                //     var hasImageAttachments = message.Attachments.Any(a => isImageUrl.IsMatch(a.Url));
+                //     if (!hasImageAttachments) return Task.CompletedTask;
 
-                    reactions = IpmEmoji.TeamEmojis.Take(10);
-                    break;
+                //     reactions = IpmEmoji.TeamEmojis.Take(10);
+                //     break;
 
                 case Channels.LoungeOffTopic:
                     var m = isWordlePost.Match(message.Content);

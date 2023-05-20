@@ -241,7 +241,7 @@ public class GuildTournament : BaseTournamentSlashCommand
 
     private GuildMessage[] guildMessages = {
         new (DayOfWeek.Tuesday, "Final submissions due in {0}!"),
-        new (DayOfWeek.Friday, $"Sign up by hitting the emoji in <#900801095788527616>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#900801095788527616> channel.\n\nSign ups close in {{0}}!", new TimeOnly(12, 0)),
+        new (DayOfWeek.Friday, $"Sign up by hitting the emoji in <#{Channels.GuildRules}>!\nIf you cannot see the channel, go to <#677924152669110292> and click on the {IpmEmoji.ipmgalaxy} reaction to see the <#{Channels.GuildRules}> channel.\n\nSign ups close in {{0}}!", new TimeOnly(12, 0)),
         new (DayOfWeek.Saturday, "Sign ups are closed, hope you've signed up! Tournament will start in {0}."),
         new (DayOfWeek.Sunday, "Tournaments have started! {0} left to start or begin your guild group."),
     };

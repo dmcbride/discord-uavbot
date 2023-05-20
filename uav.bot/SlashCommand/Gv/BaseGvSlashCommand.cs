@@ -5,7 +5,7 @@ namespace uav.bot.SlashCommand.Gv;
 
 public abstract class BaseGvSlashCommand : BaseSlashCommand
 {
-    protected const double cashArkChance = .7d;
+    protected const double cashArkChance = .705d;
     protected const double dmArkChance = 1 - cashArkChance;
     protected const double arksPerHour = 10d;
     protected (double items, GV newValue) ArkCalculate(double gv, double goalGv, double cash, double exponent)

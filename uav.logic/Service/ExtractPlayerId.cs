@@ -21,6 +21,14 @@ public class ExtractPlayerId
         "0x4",
         "0x8",
     };
+
+    private static Dictionary<string, string> tesseractCorrections = new Dictionary<string, string> {
+        ["O"] = "0",
+        ["S"] = "5",
+        ["£"] = "E"
+    };
+    private static Regex tesseractCorrectionRegex = new Regex($"[{string.Join("", tesseractCorrections.Keys)}]");
+
     public async Task<string?> Extract(string file)
     {
         foreach (var sharpen in sharpens)
@@ -31,8 +39,10 @@ public class ExtractPlayerId
             if (m.Success)
             {
                 var id = m.Groups["id"].Value;
-                // unfortunately, tesseract guesses O when it should be 0, so...
-                return id.Replace('O', '0');
+                // unfortunately, tesseract guesses some letters wrong, so....
+                var fixedId = tesseractCorrectionRegex.Replace(id, m => tesseractCorrections[m.Value]);
+                // return only the first 16 characters
+                return fixedId.Substring(0, 16);
             }
         }
         return null;

@@ -26,6 +26,12 @@ public class CashWindfalls : BaseGvSlashCommand
                 .WithDescription("Target GV")
                 .WithRequired(true)
                 .WithType(ApplicationCommandOptionType.String),
+            // new option: cw1 - how many levels of cash windfall 1 you have in your space station. Each level is a +5% boost.
+            new SlashCommandOptionBuilder()
+                .WithName("cw1")
+                .WithDescription("How many levels of cash windfall 1 you have in your space station. Each level is a +5% boost.")
+                .WithRequired(false)
+                .WithType(ApplicationCommandOptionType.Integer),
         });
 
     public override Task Invoke(SocketSlashCommand command)
@@ -33,6 +39,7 @@ public class CashWindfalls : BaseGvSlashCommand
         var options = CommandArguments(command);
         var gv = (string)options["current-gv"].Value;
         var goalGv = (string)options["target-gv"].Value;
+        var cw1 = options.ContainsKey("cw1") ? (long)options["cw1"].Value : 0;
 
         if (!GV.TryFromString(gv, out var gvValue, out var error) ||
             !GV.TryFromString(goalGv, out var goalGvValue, out error))
@@ -45,9 +52,10 @@ public class CashWindfalls : BaseGvSlashCommand
             return RespondAsync($"Your goal is already reached. Perhaps you meant to reverse them?", ephemeral: true);
         }
 
-        var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1.1);
+        var boost = 1 + (cw1 * 0.05);
+        var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1 + (.1 * boost));
         var dmRequired = cws * 30;
-        var message = @$"To get to a GV of {goalGvValue} from {gvValue}, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
+        var message = @$"To get to a GV of {goalGvValue} from {gvValue} with a {100 * (boost - 1)}% boost from your space station, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
 
 {Support.SupportStatement}";
         var embed = new EmbedBuilder()

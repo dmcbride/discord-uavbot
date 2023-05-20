@@ -1,9 +1,11 @@
 #!/bin/sh
 
 # this script will publish and run the release version of the app
-mydir=$(cd $(dirname $0)/..; pwd -P)
+thisdir=$(cd $(dirname $0); pwd -P)
+mydir=$(cd ${thisdir}/..; pwd -P)
 echo "UAV BOT" > /proc/self/comm
 
+cd "${thisdir}"/uav.bot
 if dotnet publish -c Release -o "$mydir/release"; then
   cd "$mydir/release"
   dotnet uav.dll

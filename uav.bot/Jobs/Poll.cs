@@ -25,7 +25,14 @@ public class Poll : Job
     public override async Task<DateTimeOffset?> NextJobTime()
     {
         _nextPoll = await _databaseService.GetNextExpiringPoll();
-        Console.WriteLine($"Next poll: {_nextPoll?.PollId} @ {_nextPoll?.EndDate} {_nextPoll?.EndDate.ToLocalTime()}");
+        if (_nextPoll != null)
+        {
+            Console.WriteLine($"Next poll: {_nextPoll?.PollId} @ {_nextPoll?.EndDate} {_nextPoll?.EndDate.ToLocalTime()}");
+        }
+        else
+        {
+            Console.WriteLine("No next poll");
+        }
         var next = _nextPoll?.EndDate ?? DateTimeOffset.UtcNow.AddHours(1);
         if (next < DateTimeOffset.UtcNow)
         {
@@ -87,10 +94,12 @@ public class Poll : Job
     {
         var results = new List<string>();
         var optionLength = pollValues.Values.Select(v => v.Length).Max();
+        var pollResultsDictionary = pollResults.ToDictionary(r => r.Vote, r => r.Count);
 
-        foreach (var r in pollResults.OrderBy(r => r.Vote))
+        foreach (var (vote, pollValue) in pollValues.OrderBy(r => r.Key))
         {
-            results.Add($"{pollValues[r.Vote].PadRight(optionLength)} | {r.Count}");
+            var r = pollResultsDictionary.ContainsKey(vote) ? pollResultsDictionary[vote] : 0;
+            results.Add($"{pollValue.PadRight(optionLength)} | {r}");
         }
         return string.Join("\n", results);
     }
