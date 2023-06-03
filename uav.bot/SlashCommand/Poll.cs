@@ -41,12 +41,26 @@ public class Poll : BaseSlashCommandWithSubcommands
                     )
                     .WithType(ApplicationCommandOptionType.SubCommand)
             )
+            .AddOption(
+                new SlashCommandOptionBuilder()
+                    .WithName("voted-in")
+                    .WithDescription("How many polls has a user voted in?")
+                    .AddOption(
+                        new SlashCommandOptionBuilder()
+                            .WithName("user")
+                            .WithDescription("User")
+                            .WithRequired(true)
+                            .WithType(ApplicationCommandOptionType.User)
+                    )
+                    .WithType(ApplicationCommandOptionType.SubCommand)
+            )
             ;
 
     public override IDictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>> Subcommands =>
     new Dictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>> {
             ["create"] = Create,
             ["view"] = View,
+            ["voted-in"] = VotedIn,
         };
 
     private async Task Create(IDictionary<string, SocketSlashCommandDataOption> options)
@@ -99,6 +113,21 @@ public class Poll : BaseSlashCommandWithSubcommands
                 .AddField("End Date", poll.EndDate.ToString("yyyy-MM-dd HH:mm:ss zzz"))
                 .AddField("Total Votes", totalVotes)
                 .AddField($"{usersVoted.Length} Users Voted", string.Join(Environment.NewLine, usersVoted.Select(u => u.Name())))
+                .Build(),
+            ephemeral: true
+        );
+    }
+
+    private async Task VotedIn(IDictionary<string, SocketSlashCommandDataOption> options)
+    {
+        var user = (IGuildUser)options["user"].Value;
+
+        var pollsVotedIn = await databaseService.GetNumberOfPollsUserVotedIn(user.Id, Guild!.Id);
+
+        await RespondAsync(
+            embed: new EmbedBuilder()
+                .WithTitle($"Polls Voted In: {user.Nickname ?? user.Username}")
+                .AddField("Polls Voted In", pollsVotedIn)
                 .Build(),
             ephemeral: true
         );
@@ -243,5 +272,4 @@ public class Poll : BaseSlashCommandWithSubcommands
 
         await RespondAsync(embed: embed.Build(), ephemeral: true);
    }
-
 }

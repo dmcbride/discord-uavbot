@@ -207,4 +207,16 @@ partial class DatabaseService
         await connect.ExecuteAsync(query, new { poll_id = poll.PollId });
         poll.Completed = true;
     }
+
+    public async Task<int> GetNumberOfPollsUserVotedIn(ulong userId, ulong guildId)
+    {
+        using var connect = Connect;
+        var query = @"
+            SELECT COUNT(DISTINCT p.poll_id)
+            FROM poll_votes pv
+            JOIN polls p ON pv.poll_id = p.poll_id
+            WHERE pv.user_id = @user_id
+              AND p.guild_id = @guild_id";
+        return await connect.QuerySingleAsync<int>(query, new { user_id = userId, guild_id = guildId });
+    }
 }
