@@ -91,27 +91,21 @@ class UAV
             Encoding = System.Text.Encoding.UTF8,
         };
         rollingFileAppender.ActivateOptions();
+
+        // also log to console
+        var consoleAppender = new ConsoleAppender
+        {
+            Layout = patternLayout,
+        };
+
         hierarchy.Root.AddAppender(rollingFileAppender);
+        hierarchy.Root.AddAppender(consoleAppender);
 
         hierarchy.Configured = true;
     }
 
     private Task Log(LogMessage message)
     {
-        Console.ForegroundColor = message.Severity switch
-        {
-            LogSeverity.Critical => ConsoleColor.Red,
-            LogSeverity.Error => ConsoleColor.Red,
-            LogSeverity.Warning => ConsoleColor.Yellow,
-            LogSeverity.Info => ConsoleColor.White,
-            LogSeverity.Verbose => ConsoleColor.DarkGray,
-            LogSeverity.Debug => ConsoleColor.DarkGray,
-            _ => ConsoleColor.White
-        };
-
-        Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
-        Console.ResetColor();
-        
         var logger = LogManager.GetLogger(this.GetType());
         Action<object, Exception>? logMethod = message.Severity switch
         {

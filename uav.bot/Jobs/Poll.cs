@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using log4net;
 using uav.logic.Constants;
 using uav.logic.Database;
 using uav.Schedule;
@@ -14,6 +15,7 @@ public class Poll : Job
     private readonly DatabaseService _databaseService = new DatabaseService();
     private readonly DiscordSocketClient _client;
     private logic.Database.Model.Poll? _nextPoll;
+    private ILog _logger = LogManager.GetLogger(typeof(Poll));
 
     public Poll(DiscordSocketClient client)
     {
@@ -27,15 +29,16 @@ public class Poll : Job
         _nextPoll = await _databaseService.GetNextExpiringPoll();
         if (_nextPoll != null)
         {
-            Console.WriteLine($"Next poll: {_nextPoll?.PollId} @ {_nextPoll?.EndDate} {_nextPoll?.EndDate.ToLocalTime()}");
+            _logger.Info($"Next poll: {_nextPoll?.PollId} @ {_nextPoll?.EndDate} {_nextPoll?.EndDate.ToLocalTime()}");
         }
         else
         {
-            Console.WriteLine("No next poll");
+            _logger.Info("No next poll");
         }
         var next = _nextPoll?.EndDate ?? DateTimeOffset.UtcNow.AddHours(1);
         if (next < DateTimeOffset.UtcNow)
         {
+            // if it has already passed, we probably just started up, let everything settle before we handle the next poll.
             next = DateTimeOffset.UtcNow.AddSeconds(10);
         }
         return next;
