@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -33,16 +34,41 @@ namespace uav.Command
             _client.MessageReceived += HandleAutoEmojisAsync;
             _client.MessageReceived += HandleMonthlyCounts;
             _client.MessageReceived += HandleFinalRanks;
+            _client.ReactionAdded += HandleReactionAdded;
+            _client.ReactionRemoved += HandleReactionAdded;
 
             await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), 
                                             services: null);
         }
 
-        private async Task HandleCommandAsync(SocketMessage messageParam)
+    private async Task HandleReactionAdded(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
+    {
+        try {
+            var user = reaction.User.Value as SocketGuildUser;
+            if (user is null)
+            {
+                // might be webhook user, doesn't have a nickname, can't really save it off.
+                return;
+            }
+
+            if (user.IsBot)
+            {
+                // nope, not saving that.
+                return;
+            }
+
+            var dbUser = user.ToDbUser();
+            await db.SaveUser(dbUser);
+        } catch {
+            // ignore.
+        }
+    }
+
+    private Task HandleCommandAsync(SocketMessage messageParam)
         {
             // Don't process the command if it was a system message
             var message = messageParam as SocketUserMessage;
-            if (message == null) return;
+            if (message == null) return Task.CompletedTask;
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
@@ -51,17 +77,20 @@ namespace uav.Command
             if (!(message.HasCharPrefix('!', ref argPos) || 
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
-                return;
+                return Task.CompletedTask;
 
             // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
 
             // Execute the command with the command context we just
             // created, along with the service provider for precondition checks.
-            await _commands.ExecuteAsync(
-                context: context, 
-                argPos: argPos,
-                services: null);
+            _ = Task.Run(async () => await _commands.ExecuteAsync(
+                    context: context, 
+                    argPos: argPos,
+                    services: null)
+                );
+            
+            return Task.CompletedTask;
         }
 
         private static readonly Regex isImageUrl = new Regex(@"\.(?:png|jpe?g|gif)$");
@@ -124,7 +153,7 @@ namespace uav.Command
                 return;
             }
 
-            var dbUser = message.Author.ToDbUser();
+            var dbUser = user.ToDbUser();
             await db.SaveUser(dbUser);
 
             // then set up their role
@@ -160,7 +189,8 @@ namespace uav.Command
             if (message.Author.IsBot) return;
 
             if (!message.Attachments.Any(x => isImageUrl.IsMatch(x.Url))) return;
-            var text = await Tesseract.RunTesseract(message.Attachments.First(x => isImageUrl.IsMatch(x.Url)).Url);
+            var tesseract = new Tesseract(message.Attachments.First(x => isImageUrl.IsMatch(x.Url)).Url);
+            var text = await tesseract.RunTesseract();
 
             var m = RankExtractor.Match(text ?? string.Empty);
             if (m.Success)

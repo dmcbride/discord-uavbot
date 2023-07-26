@@ -19,6 +19,11 @@ public class Hint : IDapperMappedType
     [Description("updated")]
     public DateTimeOffset Updated { get; set; }
 
+    [Description("approved_by")]
+    public ulong? ApprovedBy { get; set; }
+    [Description("approved_at")]
+    public DateTimeOffset? ApprovedAt { get; set; }
+
     public Hint()
     {
         Created = DateTimeOffset.Now;

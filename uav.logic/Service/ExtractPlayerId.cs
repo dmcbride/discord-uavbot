@@ -1,15 +1,12 @@
+using log4net;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using Overby.Extensions.AsyncBinaryReaderWriter;
 
 namespace uav.logic.Service;
 
-public class ExtractPlayerId
+public class ExtractPlayerId : TesseractExtractor<string>
 {
+    private ILog logger = LogManager.GetLogger(typeof(ExtractPlayerId));
     public ExtractPlayerId()
     {
         
@@ -29,22 +26,18 @@ public class ExtractPlayerId
     };
     private static Regex tesseractCorrectionRegex = new Regex($"[{string.Join("", tesseractCorrections.Keys)}]");
 
-    public async Task<string?> Extract(string file)
+  protected override string? FindValues(string text)
+  {
+    var m = playerIdExtractor.Match(text ?? string.Empty);
+    logger.Debug(text);
+    if (m.Success)
     {
-        foreach (var sharpen in sharpens)
-        {
-            var text = await Tesseract.RunTesseract(file, sharpen);
-
-            var m = playerIdExtractor.Match(text ?? string.Empty);
-            if (m.Success)
-            {
-                var id = m.Groups["id"].Value;
-                // unfortunately, tesseract guesses some letters wrong, so....
-                var fixedId = tesseractCorrectionRegex.Replace(id, m => tesseractCorrections[m.Value]);
-                // return only the first 16 characters
-                return fixedId.Substring(0, 16);
-            }
-        }
-        return null;
+        var id = m.Groups["id"].Value;
+        // unfortunately, tesseract guesses some letters wrong, so....
+        var fixedId = tesseractCorrectionRegex.Replace(id, m => tesseractCorrections[m.Value]);
+        // return only the first 16 characters
+        return fixedId.Substring(0, 16);
     }
+    return null;
+  }
 }

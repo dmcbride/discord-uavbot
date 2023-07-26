@@ -4,6 +4,7 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using uav.bot.Attributes;
 using uav.logic.Constants;
 using uav.logic.Extensions;
 
@@ -80,7 +81,7 @@ public class Hint : BaseSlashCommand
     {
         var shortcut = (string)options["shortcut"].Value;
 
-        var hint = await databaseService.GetHint(Command!.User.ToDbUser(), shortcut);
+        var hint = await databaseService.GetHint(Command!.User.ToDbUser(), shortcut, true);
         var shortcutId = Guid.NewGuid().ToString();
         _modalCache.Add(shortcutId, shortcut, CacheItemPolicy);
 
@@ -193,6 +194,32 @@ public class Hint : BaseSlashCommand
         _modalCache.Remove(shortcutId);
 
         var updateMsg = $"{User.Mention} added a hint for `{shortcut}`:\n\n----\n{text}\n----\n\nIf this is not okay, you can remove it with `/admin remove-user-hint`";
-        _ = Guild!.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg);
+        var approveButton = new ComponentBuilder()
+            .WithButton("Approve", $"hint:approve-hint:{User.Id}:{shortcut}", ButtonStyle.Success)
+            .WithButton("Reject", $"hint:reject-hint:{User.Id}:{shortcut}", ButtonStyle.Danger)
+            .Build();
+        _ = Guild!.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg, components: approveButton);
+    }
+
+    [ComponentHandler("approve-hint")]
+    private async Task ApproveHint(ReadOnlyMemory<string> options)
+    {
+        var hintUser = ulong.Parse(options.Span[0]);
+        var hintName = options.Span[1];
+
+        await databaseService.ApproveHint(User.ToDbUser(), hintUser, hintName);
+        await UpdateAsync(p => p.Components = new ComponentBuilder().Build());
+        await RespondAsync("Hint approved.", ephemeral: false);
+    }
+
+    [ComponentHandler("reject-hint")]
+    private async Task RejectHint(ReadOnlyMemory<string> options)
+    {
+        var hintUser = ulong.Parse(options.Span[0]);
+        var hintName = options.Span[1];
+
+        await databaseService.RejectHint(hintUser, hintName);
+        await UpdateAsync(p => p.Components = new ComponentBuilder().Build());
+        await RespondAsync("Hint rejected.", ephemeral: false);
     }
 }

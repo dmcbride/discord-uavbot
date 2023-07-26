@@ -218,13 +218,13 @@ public class GuildTournament : BaseTournamentSlashCommand
         var _guild = (SocketGuild)(command.User as IGuildUser)?.Guild!;
         var _tournament = new Services.Tournament(_guild);
 
-        var users = _tournament.TournamentContestants().ToArray();
+        var users = (await _tournament.TournamentContestants()).ToArray();
         var thisUserIsIn = users.Any(x => x.user.Id == command.User.Id);
         var allUsers = users.GroupBy(c => c.permanent).ToDictionary(g => g.Key, g => g.OrderBy(u => u.user.Nickname ?? u.user.Username).ToArray());
         var embedFields = new[] { true, false }.Where(allUsers.ContainsKey)
             .Select(x =>
                 new EmbedFieldBuilder().WithName($"{(x ? "Permanent":"This week's")} Guild Members ({allUsers[x].Length})")
-                    .WithValue(string.Join("\n", allUsers[x].Select(u => u.user.DisplayName())))
+                    .WithValue(string.Join("\n", allUsers[x].Select(u => $"{u.user.DisplayName()}{(u.active ? "" : " (inactive)")}")))
             ).ToArray();
 
         var msg = new EmbedBuilder()

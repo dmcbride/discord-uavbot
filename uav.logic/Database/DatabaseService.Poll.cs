@@ -11,8 +11,8 @@ partial class DatabaseService
     {
         using var connect = Connect;
         // cspell:disable
-        var query = @"
-            INSERT INTO polls (
+        var query = $@"
+            INSERT INTO {Table.Polls} (
                 poll_user_key,
                 guild_id,
                 channel_id,
@@ -42,8 +42,8 @@ partial class DatabaseService
     {
         using var connect = Connect;
         // cspell:disable
-        var query = @"
-            UPDATE polls SET
+        var query = $@"
+            UPDATE {Table.Polls} SET
                 guild_id = @guildid,
                 channel_id = @channelid,
                 msg_id = @msgid,
@@ -60,9 +60,9 @@ partial class DatabaseService
     public async Task<Poll> GetPoll(ulong pollId, ulong guildId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT *
-            FROM polls
+            FROM {Table.Polls}
             WHERE poll_id = @poll_id
             AND guild_id = @guild_id";
         return await connect.QueryFirstOrDefaultAsync<Poll>(query, new { poll_id = pollId, guild_id = guildId });
@@ -71,9 +71,9 @@ partial class DatabaseService
     public async Task<Poll> GetPollByUserKey(string userKey, ulong guildId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT *
-            FROM polls
+            FROM {Table.Polls}
             WHERE poll_user_key = @poll_user_key
             AND guild_id = @guild_id";
         return await connect.QueryFirstOrDefaultAsync<Poll>(query, new { poll_user_key = userKey, guild_id = guildId });
@@ -83,15 +83,15 @@ partial class DatabaseService
     {
         using var connect = Connect;
         // first, try to find the user's vote(s) and delete them.
-        var query = @"
-            DELETE FROM poll_votes
+        var query = $@"
+            DELETE FROM {Table.PollVotes}
             WHERE poll_id = @poll_id
             AND user_id = @user_id";
         var rows = await connect.ExecuteAsync(query, new { poll_id = poll.PollId, user_id = userId });
 
         // then insert the new vote(s)
-        query = @"
-            INSERT INTO poll_votes (
+        query = $@"
+            INSERT INTO {Table.PollVotes} (
                 poll_id,
                 user_id,
                 vote
@@ -104,8 +104,8 @@ partial class DatabaseService
         await connect.ExecuteAsync(query, votes.Select(vote => new { poll_id = poll.PollId, user_id = userId, vote }));
 
         // then get the number of votes
-        query = @"
-            SELECT COUNT(DISTINCT user_id) FROM poll_votes
+        query = $@"
+            SELECT COUNT(DISTINCT user_id) FROM {Table.PollVotes}
             WHERE poll_id = @poll_id;";
 
         var voteCount = await connect.QuerySingleAsync<int>(query, new { poll_id = poll.PollId });
@@ -116,9 +116,9 @@ partial class DatabaseService
     public async Task<Poll?> GetNextExpiringPoll()
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT *
-            FROM polls
+            FROM {Table.Polls}
             WHERE end_date IS NOT NULL
             AND end_date < DATE_ADD(utc_timestamp(), INTERVAL 1 HOUR)
             AND NOT completed
@@ -143,9 +143,9 @@ partial class DatabaseService
     public async Task<IEnumerable<PollResults>> GetPollResults(ulong pollId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT vote, COUNT(*) AS count
-            FROM poll_votes
+            FROM {Table.PollVotes}
             WHERE poll_id = @poll_id
             GROUP BY vote
             ORDER BY vote ASC";
@@ -155,9 +155,9 @@ partial class DatabaseService
     public async Task<int> GetNumberOfUsersVotingFor(ulong pollId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT COUNT(DISTINCT user_id)
-            FROM poll_votes
+            FROM {Table.PollVotes}
             WHERE poll_id = @poll_id";
         return await connect.QuerySingleAsync<int>(query, new { poll_id = pollId });
     }
@@ -177,15 +177,15 @@ partial class DatabaseService
     public async Task<ICollection<DetailedPollResults>> GetDetailedPollResults(ulong pollId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT vote, user_id
-            FROM poll_votes
+            FROM {Table.PollVotes}
             WHERE poll_id = @poll_id
             ORDER BY vote ASC;
             
             SELECT DISTINCT u.*
-            FROM known_users u
-            INNER JOIN poll_votes v ON v.user_id = u.user_id
+            FROM {Table.Users} u
+            INNER JOIN {Table.PollVotes} v ON v.user_id = u.user_id
             WHERE v.poll_id = @poll_id;";
         using var multi = await connect.QueryMultipleAsync(query, new { poll_id = pollId });
         var votes = await multi.ReadAsync<(int vote, ulong userId)>();
@@ -200,8 +200,8 @@ partial class DatabaseService
     public async Task CompletePoll(Poll poll)
     {
         using var connect = Connect;
-        var query = @"
-            UPDATE polls SET
+        var query = $@"
+            UPDATE {Table.Polls} SET
                 completed = TRUE
             WHERE poll_id = @poll_id";
         await connect.ExecuteAsync(query, new { poll_id = poll.PollId });
@@ -211,10 +211,10 @@ partial class DatabaseService
     public async Task<int> GetNumberOfPollsUserVotedIn(ulong userId, ulong guildId)
     {
         using var connect = Connect;
-        var query = @"
+        var query = $@"
             SELECT COUNT(DISTINCT p.poll_id)
-            FROM poll_votes pv
-            JOIN polls p ON pv.poll_id = p.poll_id
+            FROM {Table.PollVotes} pv
+            JOIN {Table.Polls} p ON pv.poll_id = p.poll_id
             WHERE pv.user_id = @user_id
               AND p.guild_id = @guild_id";
         return await connect.QuerySingleAsync<int>(query, new { user_id = userId, guild_id = guildId });

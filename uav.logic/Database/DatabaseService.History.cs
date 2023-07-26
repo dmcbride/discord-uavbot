@@ -13,7 +13,7 @@ partial class DatabaseService
         using var connect = Connect;
 
         await SaveUser(u);
-        await connect.ExecuteAsync(@"INSERT INTO history (user_id, command, options, response) VALUES (@User_Id, @Command, @Options, @Response)", new {
+        await connect.ExecuteAsync($@"INSERT INTO {Table.History} (user_id, command, options, response) VALUES (@User_Id, @Command, @Options, @Response)", new {
             User_Id = u.User_Id,
             Command = command,
             Response = response,
@@ -28,8 +28,8 @@ partial class DatabaseService
         var now = DateTime.UtcNow;
         var yyyymm = now.Year * 100 + now.Month;
 
-        await connect.ExecuteAsync(@"
-INSERT INTO participation_history (user_id, yyyymm)
+        await connect.ExecuteAsync($@"
+INSERT INTO {Table.ParticipationHistory} (user_id, yyyymm)
 VALUES (@User_Id, @yyyymm)
 ON DUPLICATE KEY UPDATE
     count = count + 1
@@ -46,10 +46,10 @@ ON DUPLICATE KEY UPDATE
 
         var yyyymm = year * 100 + month;
 
-        return await connect.QueryAsync<TopParticipationHistory>(@"
+        return await connect.QueryAsync<TopParticipationHistory>($@"
 SELECT u.*, count
-FROM participation_history p
-JOIN known_users u ON p.user_id = u.user_id
+FROM {Table.ParticipationHistory} p
+JOIN {Table.Users} u ON p.user_id = u.user_id
 WHERE count >= @minActivity
   AND (@includeMods OR not is_mod)
   AND yyyymm = @yyyymm

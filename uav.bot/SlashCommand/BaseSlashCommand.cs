@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using log4net;
+using log4net.Core;
 using uav.bot.Attributes;
 using uav.logic.Constants;
 using uav.logic.Database;
@@ -16,6 +18,12 @@ namespace uav.bot.SlashCommand;
 public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<ComponentHandlerAttribute>
 {
     protected readonly DatabaseService databaseService = new DatabaseService();
+    protected ILog logger;
+
+    public BaseSlashCommand()
+    {
+        logger = LogManager.GetLogger(GetType());
+    }
 
     public virtual string CommandName => GetType().Name.ToSlashCommand();
 
@@ -300,6 +308,21 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     protected virtual Task InvokeComponent(ReadOnlyMemory<string> command)
     {
         return (this as ICommandHandler<ComponentHandlerAttribute>).RunCommand(command);
+    }
+
+    protected async Task UpdateAsync(Action<MessageProperties> action)
+    {
+        logger.Debug($"Updating message {Component?.Message.Id}");
+
+        if (Component is null)
+        {
+            throw new Exception("This is only for components");
+        }
+
+        logger.Debug($"Still updating message {Component.Message.Id}");
+        await Component.UpdateAsync(action);
+        logger.Debug($"Updated message {Component.Message.Id}");
+        // await Component.Message.ModifyAsync(action);
     }
 }
 

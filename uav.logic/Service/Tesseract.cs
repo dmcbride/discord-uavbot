@@ -9,13 +9,23 @@ namespace uav.logic.Service;
 
 public class Tesseract
 {
-    public static async Task<string?> RunTesseract(string file, string? sharpen = null)
+    private byte[]? data;
+    private string file;
+
+    public Tesseract(string file)
     {
-        byte[] data;
-        if (file.StartsWith("http"))
-            data = await Download(file);
-        else
-            data = await Load(file);
+        this.file = file;
+    }
+
+    public async Task<string?> RunTesseract(string? sharpen = null)
+    {
+        if (data == null)
+        {
+            if (file.StartsWith("http"))
+                data = await Download(file);
+            else
+                data = await Load(file);
+        }
 
         return await RunTesseract(data, sharpen);
     }

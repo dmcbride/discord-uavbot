@@ -26,6 +26,22 @@ public class Register : BaseSlashCommand
                 .WithDescription("Check your registered player ID")
                 .WithType(ApplicationCommandOptionType.SubCommand)
         )
+        .AddOption(
+            new SlashCommandOptionBuilder()
+                .WithName("set-credit-config")
+                .WithDescription("Set your current galaxy set up")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("lounge-level", ApplicationCommandOptionType.Integer, "Lounge level", minValue: 0, maxValue: 50)
+                .AddOption("has-exodus", ApplicationCommandOptionType.Boolean, "Has exodus")
+                .AddOption("credits-1", ApplicationCommandOptionType.Integer, "Credits 1", minValue: 0, maxValue: 5)
+                .AddOption("credits-2", ApplicationCommandOptionType.Integer, "Credits 2", minValue: 0, maxValue: 4)
+                .AddOption("credits-3", ApplicationCommandOptionType.Integer, "Credits 3", minValue: 0, maxValue: 4)
+                .AddOption("credits-4", ApplicationCommandOptionType.Integer, "Credits 4", minValue: 0, maxValue: 4)
+                .AddOption("credits-5", ApplicationCommandOptionType.Integer, "Credits 5", minValue: 0, maxValue: 6)
+                .AddOption("credits-6", ApplicationCommandOptionType.Integer, "Credits 6", minValue: 0, maxValue: 8)
+                .AddOption("credits-7", ApplicationCommandOptionType.Integer, "Credits 7", minValue: 0, maxValue: 1)
+                .AddOption("credits-8", ApplicationCommandOptionType.Integer, "Credits 8", minValue: 0, maxValue: 10)
+        )
         ;
 
     public override Task Invoke(SocketSlashCommand command)
@@ -35,12 +51,65 @@ public class Register : BaseSlashCommand
         Func<SocketSlashCommand, IDictionary<string, SocketSlashCommandDataOption>, Task> subCommand = command.Data.Options.First().Name switch {
             "player-id" => PlayerId,
             "get-player-id" => GetPlayerId,
+            "set-credit-config" => SetCreditConfig,
             _ => throw new NotImplementedException(),
         };
         return subCommand(command, options);
     }
 
-    protected override bool IsEphemeral(bool? _) => true;
+private async Task SetCreditConfig(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> dictionary)
+{
+    // load the user's current config
+    var config = await databaseService.GetUserConfig(User.ToDbUser());
+
+    // update the config with the new values
+    if (dictionary.ContainsKey("lounge-level"))
+    {
+        config.LoungeLevel = (int)(long)dictionary["lounge-level"].Value;
+    }
+    if (dictionary.ContainsKey("has-exodus"))
+    {
+        config.HasExodus = (bool)dictionary["has-exodus"].Value;
+    }
+    if (dictionary.ContainsKey("credits-1"))
+    {
+        config.Credits1 = (int)(long)dictionary["credits-1"].Value;
+    }
+    if (dictionary.ContainsKey("credits-2"))
+    {
+        config.Credits2 = (int)(long)dictionary["credits-2"].Value;
+    }
+    if (dictionary.ContainsKey("credits-3"))
+    {
+        config.Credits3 = (int)(long)dictionary["credits-3"].Value;
+    }
+    if (dictionary.ContainsKey("credits-4"))
+    {
+        config.Credits4 = (int)(long)dictionary["credits-4"].Value;
+    }
+    if (dictionary.ContainsKey("credits-5"))
+    {
+        config.Credits5 = (int)(long)dictionary["credits-5"].Value;
+    }
+    if (dictionary.ContainsKey("credits-6"))
+    {
+        config.Credits6 = (int)(long)dictionary["credits-6"].Value;
+    }
+    if (dictionary.ContainsKey("credits-7"))
+    {
+        config.Credits7 = (int)(long)dictionary["credits-7"].Value;
+    }
+    if (dictionary.ContainsKey("credits-8"))
+    {
+        config.Credits8 = (int)(long)dictionary["credits-8"].Value;
+    }
+
+    await databaseService.UpdateUserConfig(config);
+
+    await RespondAsync($"Updated your config.", ephemeral: true);
+}
+
+  protected override bool IsEphemeral(bool? _) => true;
 
     private async Task PlayerId(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {

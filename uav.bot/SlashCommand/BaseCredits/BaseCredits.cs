@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -41,6 +42,20 @@ public class BaseCredits : BaseSlashCommand
                 .WithDescription("Estimate the GV required for a given base credits")
                 .AddOption("credits", ApplicationCommandOptionType.Integer, "credits", minValue: 10, isRequired: true)
         )
+        .AddOption(
+            new SlashCommandOptionBuilder()
+                .WithName("submit-screenshot")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .WithDescription("Submit a screenshot of a GV-to-base-credit pair")
+                .AddOption("screenshot1", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: true)
+                .AddOption("screenshot2", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot3", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot4", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot5", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot6", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot7", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                .AddOption("screenshot8", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+        )
         ;
 
     public override Task Invoke(SocketSlashCommand command)
@@ -64,9 +79,53 @@ public class BaseCredits : BaseSlashCommand
             "submit" => Submit,
             "credits-for" => CreditsFor,
             "gv-for" => GvFor,
+            "submit-screenshot" => SubmitScreenshot,
             _ => throw new NotImplementedException(),
         };
         return subCommand(command, options);
+    }
+
+    private async Task SubmitScreenshot(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> dictionary)
+    {
+        var shots = Enumerable.Range(1, 8)
+            .Select(i => dictionary.TryGetValue($"screenshot{i}", out var shot) ? (IAttachment)shot.Value : null)
+            .Where(shot => shot != null)
+            .ToArray();
+        
+        await DeferAsync();
+
+        var extractor = new ExtractGvBaseCredits();
+        var results = new StringBuilder();
+        foreach (var (shot, idx) in shots.Select((shot, idx) => (shot, idx + 1)))
+        {
+            var extractedValues = await extractor.Extract(shot!.Url);
+            if (extractedValues == null)
+            {
+                results.AppendLine($"Unable to extract values from screenshot {idx}");
+                continue;
+            }
+
+            var (message, success) = await arkService.UpdateCredits(extractedValues.gv, extractedValues.credits, command.User.ToDbUser());
+            if (success)
+            {
+                var contributionCount = await databaseService.CountByUser(command.User.ToDbUser());
+                if (contributionCount.total == 1)
+                {
+                    message += $" Thank you for your very first contribution!";
+                }
+                else
+                {
+                    message += $" You have now contributed **{contributionCount.total}** data point(s), **{contributionCount.distinctBaseCredits}** different base credits, across **{contributionCount.distinctTiers}** tiers.";
+                }
+                results.AppendLine(message);
+            }
+            else
+            {
+                results.AppendLine($"Unable to update credits for screenshot {idx}: {message}");
+            }
+        }
+
+        await RespondAsync(results.ToString());
     }
 
     private async Task Submit(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
@@ -94,10 +153,13 @@ public class BaseCredits : BaseSlashCommand
 
     private async Task CreditsFor(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
+        // see if we have any user config.
+        var userConfig = await databaseService.GetUserConfig(command.User.ToDbUser());
+
         // by this point, we've already validated it once, so we're good.
         GV.TryFromString((string)options["gv"].Value, out var gv, out var _);
         
-        var msg = await arkService.QueryCreditRange(gv!);
+        var msg = await arkService.QueryCreditRange(gv!, userConfig);
 
         await RespondAsync(msg);
         return;

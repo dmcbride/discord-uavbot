@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
+using uav.logic.Database;
 using uav.logic.Extensions;
 using IpmEmoji = uav.logic.Constants.IpmEmoji;
 
@@ -37,18 +38,22 @@ public class Tournament
 
     private readonly DiscordSocketClient? _client;
 
-    public IEnumerable<(SocketGuildUser user, bool permanent)> TournamentContestants()
+    public async Task<IEnumerable<(SocketGuildUser user, bool permanent, bool active)>> TournamentContestants()
     {
         var guildAccessRole = Guild.GetRole(Roles.GuildAccessRole);
         var permanentGuildRole = Guild.GetRole(Roles.PermanentGuildAccessRole);
-        return permanentGuildRole.Members.Select(m => (user: m, permanent: true))
+        var allUsers = permanentGuildRole.Members.Select(m => (user: m, permanent: true))
             .Concat(guildAccessRole.Members.Select(m => (user: m, permanent: false)))
-            .DistinctBy(m => m.user.Id);
+            .DistinctBy(m => m.user.Id)
+            .ToArray();
+        var recentUserActivity = await new DatabaseService().GetLastSeen(allUsers.Select(u => u.user.Id), DateTimeOffset.UtcNow.AddDays(-3));
+        return allUsers.Select(u => (u.user, u.permanent, active: recentUserActivity.ContainsKey(u.user.Id)));
     }
 
     public async Task SelectTeams()
     {
-        var users = TournamentContestants().Select(c => c.user).ToArray();
+        var allUsers = (await TournamentContestants()).ToArray();
+        var users = allUsers.Where(c => c.active).Select(c => c.user).ToArray();
 
         var channel = Guild.GetTextChannel(Channels.AllTeamsRallyRoom);
         if (!users.Any())

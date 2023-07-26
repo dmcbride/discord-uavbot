@@ -54,7 +54,8 @@ public class Arks : CommandBase
 
         if (parameters.Length == 1)
         {
-            var msg = await arkService.QueryCreditRange(gvValue);
+            var userConfig = await databaseService.GetUserConfig(Context.User.ToDbUser());
+            var msg = await arkService.QueryCreditRange(gvValue, userConfig);
 
             await ReplyAsync(msg);
             return;
