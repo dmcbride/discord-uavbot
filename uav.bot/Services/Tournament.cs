@@ -38,7 +38,9 @@ public class Tournament
 
     private readonly DiscordSocketClient? _client;
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task<IEnumerable<(SocketGuildUser user, bool permanent, bool active)>> TournamentContestants()
+#pragma warning restore CS1998
     {
         var guildAccessRole = Guild.GetRole(Roles.GuildAccessRole);
         var permanentGuildRole = Guild.GetRole(Roles.PermanentGuildAccessRole);
@@ -46,8 +48,13 @@ public class Tournament
             .Concat(guildAccessRole.Members.Select(m => (user: m, permanent: false)))
             .DistinctBy(m => m.user.Id)
             .ToArray();
-        var recentUserActivity = await new DatabaseService().GetLastSeen(allUsers.Select(u => u.user.Id), DateTimeOffset.UtcNow.AddDays(-3));
-        return allUsers.Select(u => (u.user, u.permanent, active: recentUserActivity.ContainsKey(u.user.Id)));
+        // var recentUserActivity = await new DatabaseService().GetLastSeen(allUsers.Select(u => u.user.Id), DateTimeOffset.UtcNow.AddDays(-3));
+        return allUsers.Select(u => (
+          u.user,
+          u.permanent,
+          // probably come back to this.
+          active: true // recentUserActivity.ContainsKey(u.user.Id)
+          ));
     }
 
     public async Task SelectTeams()
