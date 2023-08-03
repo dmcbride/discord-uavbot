@@ -47,7 +47,8 @@ public class Tesseract
     public static async Task<string?> RunTesseract(byte[] data, string? sharpen = null)
     {
         sharpen = sharpen == null ? string.Empty : $" -sharpen {sharpen}";
-        await RunBinarySubprocess("/usr/bin/convert", $"- -alpha off{sharpen} -negate -", data, async (r) => {
+        await RunBinarySubprocess("/usr/bin/convert", $"- -set colorspace Gray -separate -average{sharpen} -", data, async (r) => {
+          // was -alpha off{sharpen} -negate
             data = await ReadAllBytesAsync(r.BaseStream);
         });
 

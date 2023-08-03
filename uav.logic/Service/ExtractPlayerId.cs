@@ -12,7 +12,7 @@ public class ExtractPlayerId : TesseractExtractor<string>
         
     }
 
-    private Regex playerIdExtractor = new Regex(@"Player\s*ID:\s*(?<id>\S+)", RegexOptions.Singleline);
+    private Regex playerIdExtractor = new Regex(@"Player\s*ID:\s*(?<id>\S{15,16})", RegexOptions.Singleline);
     private string?[] sharpens = new[] {
         null,
         "0x4",
@@ -32,11 +32,12 @@ public class ExtractPlayerId : TesseractExtractor<string>
     logger.Debug(text);
     if (m.Success)
     {
+      logger.Debug($"Found player ID: {m.Groups["id"].Value}");
         var id = m.Groups["id"].Value;
         // unfortunately, tesseract guesses some letters wrong, so....
         var fixedId = tesseractCorrectionRegex.Replace(id, m => tesseractCorrections[m.Value]);
         // return only the first 16 characters
-        return fixedId.Substring(0, 16);
+        return fixedId.Length > 16 ? fixedId.Substring(0, 16) : fixedId;
     }
     return null;
   }
