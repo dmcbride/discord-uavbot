@@ -19,7 +19,7 @@ public class Leaderboards : MonthlyJobs
         jobDescriptions = [
             new (10, "Leaderboard Reminder", SendLeaderboardReminder),
             new (20, "Leaderboard Reminder", SendLeaderboardReminder),
-            new (-3, "Newsletter Reminder", SendNewsletterReminder),
+            // new (-3, "Newsletter Reminder", SendNewsletterReminder),
             // this is UTC midnight the day before the end of the month - which is roughly 48 hours before end of month. A bit confusing.
             new (-1, "Leaderboard Final Reminder", SendLeaderboardFinalReminder),
         ];
