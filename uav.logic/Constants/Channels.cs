@@ -5,7 +5,7 @@ namespace uav.logic.Constants;
 public static class Channels
 {
     public const ulong DiscordServerNews = 823623190172401694ul;
-    public const ulong RoleClaims = 677924152669110292ul;
+    public const ulong RoleClaims = 984493777219616828ul;
     public const ulong NewsletterSubmissions = 955376762173399050ul;
 
     public const ulong IdleMinersHangout = 525330951723548693ul;
@@ -36,6 +36,7 @@ public static class Channels
 
     public const ulong CreditFarmersAnonymous = 905379245709201519ul;
     public const ulong LongHaulersGang = 871129095805747310ul;
+    public const ulong FarmingChallenge = 905379356799553567ul;
 
     public static class Records
     {
@@ -67,7 +68,6 @@ public static class Channels
                         AllAboutTodaysGalaxy,
                         AsteroidPics,
                         SuggestionsVenue,
-                        RoleClaims,
                         TournamentTalks,
                         PlatinumTournament,
                         LongHaulersGang,

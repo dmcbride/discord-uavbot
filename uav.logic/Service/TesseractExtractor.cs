@@ -1,12 +1,16 @@
+using System.Reflection;
+using log4net;
+
 namespace uav.logic.Service;
 
-public abstract class TesseractExtractor<T> where T : class
+public abstract class TesseractExtractor<T>
 {
+  private ILog? logger = MethodBase.GetCurrentMethod()?.DeclaringType == null ? null : LogManager.GetLogger(MethodBase.GetCurrentMethod()?.DeclaringType);
   public TesseractExtractor()
   {
   }
 
-  private string?[] sharpens = new[] {
+  private readonly string?[] sharpens = new[] {
     null,
     "0x4",
     "0x8",
@@ -21,12 +25,17 @@ public abstract class TesseractExtractor<T> where T : class
     {
       var text = await tesseract.RunTesseract(sharpen);
 
-      var values = FindValues(text ?? string.Empty);
+      if (text == null)
+      {
+        continue;
+      }
+
+      var values = FindValues(text);
       if (values != null)
       {
         return values;
       }
     }
-    return null;
+    return default;
   }
 }

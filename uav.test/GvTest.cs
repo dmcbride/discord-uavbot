@@ -33,5 +33,36 @@ namespace uav.test
             GV.TryFromString("10M", out var gv, out var msg);
             Assert.AreEqual(1, gv!.TierNumber);
         }
+
+        [TestMethod]
+        public void regex_test()
+        {
+          var text = @"Estimating resolution as 443
+SELL GALAXY
+
+Sell your galaxy and start a new one in
+exchange for precious credits
+
+Galaxy Value $3.6E+24
+Base Reward 1804 4
+Lounge Bonus 3879 4s
+
+Space Station 1250 4
+Exodus Bonus 6933 4
+Total Reward 13866 4
+
+DOUBLE CREDITS
+@)100
+
+PACKAGING
+
+Lv 44
+Cargo x12.25
+";
+          var gvExtractor = new System.Text.RegularExpressions.Regex(@"Galaxy\s+Value\s*\$(\d+\.?\d*(?:E\+\d+|[a-zA-Z]{1,2}|0))");
+          var gvMatch = gvExtractor.Match(text);
+          var gvBase = gvMatch.Groups[1].Value;
+          Assert.AreEqual("3.6E+24", gvBase);
+        }
     }
 }

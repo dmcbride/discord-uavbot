@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using MathNet.Numerics;
 using uav.logic.Database;
 
@@ -11,8 +10,8 @@ namespace uav.logic.Models
     {
         private const int TierOffset = 6; // 10m
         public const int MaxTier = 109 - TierOffset; // from 1E7 to 1E109
-        private static float[] prestigeTierValueBase = new float[MaxTier];
-        private DatabaseService database = new DatabaseService();
+        private static readonly float[] prestigeTierValueBase = new float[MaxTier];
+        private readonly DatabaseService database = new();
 
         static Credits()
         {
@@ -36,7 +35,7 @@ namespace uav.logic.Models
         public (double gvFloor, double gvCeiling) TierRange(double gv)
         {
             var tier = Math.Floor(Math.Log10(gv));
-            var upperTier = Math.Min(tier + 1, MaxTier);
+            var upperTier = Math.Min(tier + 1, MaxTier + TierOffset);
 
             return (Math.Pow(10, tier), Math.Pow(10, upperTier));
         }
@@ -92,7 +91,7 @@ namespace uav.logic.Models
             if (b > minGv)
             {
                 return (-1, false);
-            }            
+            }
 
             return ((int) Math.Floor(m * gv + b), false);
         }

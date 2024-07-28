@@ -3,10 +3,10 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Extensions.Extensions;
 using Discord.WebSocket;
 using uav.bot.Attributes;
 using uav.logic.Constants;
-using uav.logic.Extensions;
 
 namespace uav.bot.SlashCommand;
 
@@ -135,7 +135,7 @@ public class Hint : BaseSlashCommand
         var users = (await databaseService.GetHintUsers()).ToDictionary(u => u.User_Id, u => u.Name());
         var embed = new EmbedBuilder()
             .WithTitle("Hints")
-            .WithDescription(string.Join("\n", hints.Select(h => $"`{h.HintName}` ({h.Title}) by `{users[h.UserId]}`")))
+            .WithDescription(string.Join("\n", hints.Select(h => $"**`{h.HintName}`** ({h.Title}) by {users[h.UserId]}")))
             .Build();
         await RespondAsync(embed: embed, ephemeral: true);
     }
@@ -153,7 +153,7 @@ public class Hint : BaseSlashCommand
         user ??= Guild!.GetUser(hint.UserId);
         var embed = new EmbedBuilder()
             .WithTitle(hint.Title)
-            .WithDescription($"{hint.HintText}\n\nby {user.Mention}")
+            .WithDescription($"(shortcut: {hint.HintName})\n\n{hint.HintText}\n\nby {user.Mention}")
             .Build();
         
         // for now, only show registered-users' hints. Probably should use a different role for this.
@@ -188,7 +188,7 @@ public class Hint : BaseSlashCommand
         var title = options["title"].Value;
         var text = options["hint-text"].Value;
 
-        var hint = new uav.logic.Database.Model.Hint(User.ToDbUser(), shortcut, title, text);
+        var hint = new logic.Database.Model.Hint(User.ToDbUser(), shortcut, title, text);
         await databaseService.AddHint(hint);
         await RespondAsync("Hint added.", ephemeral: true);
         _modalCache.Remove(shortcutId);
@@ -198,7 +198,25 @@ public class Hint : BaseSlashCommand
             .WithButton("Approve", $"hint:approve-hint:{User.Id}:{shortcut}", ButtonStyle.Success)
             .WithButton("Reject", $"hint:reject-hint:{User.Id}:{shortcut}", ButtonStyle.Danger)
             .Build();
-        _ = Guild!.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg, components: approveButton);
+        _ = SendApprovalMessage();
+
+        async Task SendApprovalMessage()
+        {
+            try
+            {
+                var user = Guild!.GetTextChannel(Channels.BotTesterConf).SendMessageAsync(updateMsg, components: approveButton);
+            }
+            catch (Exception e)
+            {
+                var channel = await Guild!.GetUser(Support.SupportPerson).CreateDMChannelAsync();
+                // send me a private message
+                await channel.SendMessageAsync(
+                    $"Error occurred with component using command {string.Join(":", command)}",
+                    embed: new EmbedBuilder().WithTitle("error").WithDescription($"```\n{e}\n```").Build()
+                    );
+                Console.Error.WriteLine($"Error occurred with adding hint using command {string.Join(":", command)}\n\n{e}");
+            }
+        }
     }
 
     [ComponentHandler("approve-hint")]

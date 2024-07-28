@@ -226,6 +226,13 @@ public class Poll : BaseSlashCommandWithSubcommands
         var userId = Interaction.User.Id;
         var values = Component!.Data.Values;
         var pollValues = poll.Options.Options.ToDictionary(o => o.Id.ToString(), o => o);
+
+        if (pollValues.Count == 0)
+        {
+            await RespondAsync("You did not seem to vote on anything. Please try again.", ephemeral: true);
+            return;
+        }
+
         var userSelectedValues = values.NaturalOrderBy(v => v).Select(v => pollValues[v].Text).ToList();
         var voteResults = await databaseService.VotePoll(poll, userId, values);
         
@@ -267,7 +274,15 @@ public class Poll : BaseSlashCommandWithSubcommands
             ;
         foreach (var r in results)
         {
-            embed.AddField(pollNames[r.vote], string.Join("\n", r.users.Select(u => u.User_Nick ?? u.User_Name)));
+            var votes = r.users.Select(u => u.User_Nick ?? u.User_Name);
+            // cannot go over 1024 characters, so if we go over, use "..."
+            var votesString = string.Join("\n", votes);
+            if (votesString.Length > 1024)
+            {
+                votesString = votesString.Substring(0, 1021) + "...";
+            }
+
+            embed.AddField(pollNames[r.vote], votesString);
         }
 
         await RespondAsync(embed: embed.Build(), ephemeral: true);

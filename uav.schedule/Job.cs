@@ -25,7 +25,7 @@ public abstract class Job : IJob
         {
             return null;
         }
-        return nextJobTime.Value.ToUniversalTime() - DateTimeOffset.UtcNow;
+        return (nextJobTime.Value.ToUniversalTime() - DateTimeOffset.UtcNow).Add(new TimeSpan(0, 0, 0, 0, 1));
     }
 
     public abstract Task<DateTimeOffset?> NextJobTime();

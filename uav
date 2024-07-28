@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+
+dir="/home/dmcbride/prj/uav/release"
+command=". ~/.bash_profile; . /share/prj/uav/setup.sh; cd ${dir}; dotnet uav.dll"
+
+depends() {
+  need net mysql
+}
+
+start() {
+  ebegin "Starting uav"
+  start-stop-daemon --start --background --exec /bin/bash --user dmcbride --make-pidfile --pidfile /var/run/uav.pid -- -c "$command"
+  eend $?
+}
+
+stop() {
+  ebegin "Stopping uav"
+  start-stop-daemon --stop --pidfile /var/run/uav.pid
+  eend $?
+}
+

@@ -17,7 +17,7 @@ namespace uav.bot.SlashCommand;
 
 public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<ComponentHandlerAttribute>
 {
-    protected readonly DatabaseService databaseService = new DatabaseService();
+    protected readonly DatabaseService databaseService = new();
     protected ILog logger;
 
     public BaseSlashCommand()
@@ -40,14 +40,14 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     
     public SocketGuildUser User => (SocketGuildUser)Interaction.User;
     private IDbUser? _dbUser;
-    protected IDbUser dbUser => _dbUser ??= User.ToDbUser();
+    protected IDbUser DbUser => _dbUser ??= User.ToDbUser();
 
     public SocketGuild? Guild => User.Guild;
 
     public async Task DoCommand()
     {
         // save user.
-        await databaseService.SaveUser(dbUser);
+        await databaseService.SaveUser(DbUser);
 
         try
         {
@@ -60,7 +60,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
         if (!isResponded)
         {
-            await databaseService.AddHistory(dbUser, commandString(), null, "No response");
+            await databaseService.AddHistory(DbUser, CommandString(), null, "No response");
         }
     }
 
@@ -112,15 +112,17 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     protected ModalBuilder ModalBuilder(params string[] id) => new ModalBuilder()
         .WithCustomId(string.Join(":", CommandName.AndThen(id)));
 
+#pragma warning disable IDE0060
     private async Task SaveHistory(string? text, Embed[]? embeds, bool isTTS, bool? ephemeral, AllowedMentions? allowedMentions, MessageComponent? components, Embed? embed, RequestOptions? options)
+#pragma warning restore IDE0060
     {
         isResponded = true;
 
-        var command = commandString();
+        var command = CommandString();
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(dbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component!.Data.CustomId, command, response);
+        await databaseService.AddHistory(DbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component!.Data.CustomId, command, response);
 
         IEnumerable<string?> responses()
         {
@@ -161,7 +163,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
         }
     }
 
-    private string commandString()
+    private string CommandString()
     {
         var commandParams = new List<string>();
 
@@ -255,7 +257,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
     public async Task DoModal(string[] command)
     {
-        await databaseService.SaveUser(dbUser);
+        await databaseService.SaveUser(DbUser);
         try
         {
             await InvokeModal(command);
@@ -284,7 +286,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
     public async Task DoComponent(ReadOnlyMemory<string> command)
     {
-        await databaseService.SaveUser(dbUser);
+        await databaseService.SaveUser(DbUser);
         try
         {
             await InvokeComponent(command);
@@ -294,11 +296,11 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
             if (!isResponded)
             {
                 await RespondAsync($"Something went wrong. Please contact Tanktalus", ephemeral: true);
-                var channel = await Guild!.GetUser(410138719295766537).CreateDMChannelAsync();
+                var channel = await Guild!.GetUser(Support.SupportPerson).CreateDMChannelAsync();
                 // send me a private message
                 await channel.SendMessageAsync(
                     $"Error occurred with component using command {string.Join(":", command)}",
-                    embed: new EmbedBuilder().WithTitle("error").WithDescription($"```\n{e.ToString()}\n```").Build()
+                    embed: new EmbedBuilder().WithTitle("error").WithDescription($"```\n{e}\n```").Build()
                     );
                 Console.Error.WriteLine($"Error occurred with component using command {string.Join(":", command)}\n\n{e}");
             }
@@ -344,12 +346,12 @@ public abstract class BaseSlashCommandWithSubcommands : BaseSlashCommand
     public abstract IDictionary<string, Func<IDictionary<string, SocketSlashCommandDataOption>, Task>>
         Subcommands { get; }
 
-    private static MemoryCache _cache => MemoryCache.Default;
+    private static MemoryCache Cache => MemoryCache.Default;
 
     protected ModalBuilder ModalBuilder(string command, object data)
     {
         var key = string.Join(":", new[] {command, User.Id.ToString(), Guid.NewGuid().ToString()});
-        _cache.Add(key, data, DateTimeOffset.Now.AddMinutes(60));
+        Cache.Add(key, data, DateTimeOffset.Now.AddMinutes(60));
         return ModalBuilder(key);
     }
 
@@ -361,7 +363,7 @@ public abstract class BaseSlashCommandWithSubcommands : BaseSlashCommand
             throw new Exception($"Modal {modal} not found");
         }
 
-        var data = _cache.Get(string.Join(":", command));
+        var data = Cache.Get(string.Join(":", command));
         var options = Modal!.Data.Components.ToDictionary(c => c.CustomId, c => (IComponentInteractionData)c);
 
         return modalMethod.Invoke(command.Skip(1).ToArray(), data, options);

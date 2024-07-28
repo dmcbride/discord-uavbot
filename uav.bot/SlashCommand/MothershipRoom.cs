@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Extensions.Extensions;
 using Discord.WebSocket;
 using uav.logic.Constants;
-using uav.logic.Extensions;
 
 namespace uav.bot.SlashCommand;
 

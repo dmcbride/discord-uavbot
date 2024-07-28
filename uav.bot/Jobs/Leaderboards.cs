@@ -14,14 +14,37 @@ public class Leaderboards : MonthlyJobs
 
     public Leaderboards(DiscordSocketClient client)
     {
-        this._client = client;
+        _client = client;
 
-        jobDescriptions = new JobDescription[] {
+        jobDescriptions = [
             new (10, "Leaderboard Reminder", SendLeaderboardReminder),
             new (20, "Leaderboard Reminder", SendLeaderboardReminder),
+            new (-3, "Newsletter Reminder", SendNewsletterReminder),
             // this is UTC midnight the day before the end of the month - which is roughly 48 hours before end of month. A bit confusing.
             new (-1, "Leaderboard Final Reminder", SendLeaderboardFinalReminder),
+        ];
+    }
+
+    private async Task SendNewsletterReminder()
+    {
+        // we want to give them until two days before the end of the month to submit their newsletter submissions.
+        var now = DateTimeOffset.UtcNow;
+        var finalDayToSubmit = DateTime.DaysInMonth(now.Year, now.Month) - 2;
+
+        var finalDaySuffix = (finalDayToSubmit % 10) switch
+        {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th"
         };
+
+        var embed = new EmbedBuilder()
+            .WithTitle("Newsletter Reminder")
+            .WithDescription(@$"The newsletter is planned to be compiled soon. If you have anything you'd like to include, please submit it in <#{Channels.RoleClaims}> by the {finalDayToSubmit}{finalDaySuffix}. Thanks!")
+            .WithColor(Color.DarkRed);
+
+        await _guild.GetTextChannel(Channels.DiscordServerNews).SendMessageAsync(embed: embed.Build());
     }
 
     protected override ICollection<JobDescription> jobDescriptions { get; }

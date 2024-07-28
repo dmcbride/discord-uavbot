@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Discord.Extensions.Extensions;
 using uav.logic.Extensions;
 using uav.logic.Models;
 

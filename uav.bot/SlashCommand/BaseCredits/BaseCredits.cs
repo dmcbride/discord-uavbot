@@ -52,9 +52,9 @@ public class BaseCredits : BaseSlashCommand
                 .AddOption("screenshot3", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
                 .AddOption("screenshot4", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
                 .AddOption("screenshot5", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
-                .AddOption("screenshot6", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
-                .AddOption("screenshot7", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
-                .AddOption("screenshot8", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                // .AddOption("screenshot6", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                // .AddOption("screenshot7", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
+                // .AddOption("screenshot8", ApplicationCommandOptionType.Attachment, "Screenshot", isRequired: false)
         )
         ;
 
@@ -87,7 +87,7 @@ public class BaseCredits : BaseSlashCommand
 
     private async Task SubmitScreenshot(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> dictionary)
     {
-        var shots = Enumerable.Range(1, 8)
+        var shots = Enumerable.Range(1, 5)
             .Select(i => dictionary.TryGetValue($"screenshot{i}", out var shot) ? (IAttachment)shot.Value : null)
             .Where(shot => shot != null)
             .ToArray();

@@ -1,12 +1,12 @@
 using System.Linq;
-using Discord;
 using Discord.WebSocket;
 using uav.logic.Database.Model;
+using uav.logic.Extensions;
 
-public static class UserExtensions
+public static partial class UserExtensions
 
 {
-    private class DbUser : IDbUser
+    private partial class DbUser : IDbUser
     {
         SocketGuildUser? _u;
         SocketWebhookUser? _wu;
@@ -31,6 +31,8 @@ public static class UserExtensions
         public string? User_Nick => _u?.Nickname ?? null;
 
         public IEnumerable<SocketRole> Roles => _u?.Roles ?? Enumerable.Empty<SocketRole>();
+
+        public string UserNameDisplay => User_Name.FixName();
     }
 
     public static IDbUser ToDbUser(this SocketGuildUser u) => new DbUser(u);
@@ -45,5 +47,5 @@ public static class UserExtensions
         _ => throw new System.Exception($"Unknown user type {u.GetType().Name}"),
     };
 
-    public static string DisplayName(this SocketGuildUser u) => u.Nickname ?? u.Username;
+    public static string DisplayName(this SocketGuildUser u) => (u.Nickname ?? u.Username).FixName();
 }

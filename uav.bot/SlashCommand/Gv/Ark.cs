@@ -1,10 +1,9 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Extensions.Extensions;
 using Discord.WebSocket;
 using uav.logic.Constants;
-using uav.logic.Extensions;
 using uav.logic.Models;
 
 namespace uav.bot.SlashCommand.Gv;
@@ -70,9 +69,9 @@ public class Ark : BaseGvSlashCommand
             return;
         }
 
-        if (cashValue < gvValue * 0.54)
+        if (cashValue < gvValue * 0.49)
         {
-            await RespondAsync($"This calculator does not (yet) handle cash-on-hand under 54% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.", ephemeral: true);
+            await RespondAsync($"This calculator does not (yet) handle cash-on-hand under 40% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.", ephemeral: true);
             return;
         }
 

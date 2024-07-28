@@ -6,6 +6,7 @@ using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
 using uav.logic.Database;
+using uav.logic.Database.Model;
 using uav.logic.Extensions;
 using IpmEmoji = uav.logic.Constants.IpmEmoji;
 
@@ -13,7 +14,7 @@ namespace uav.bot.Services;
 
 public class Tournament
 {
-    private static Emoji[] GoTeamEmojis = new[] {
+    private static readonly Emoji[] GoTeamEmojis = new[] {
         Emoji.Parse("🇬"),
         Emoji.Parse("🇴"),
         Emoji.Parse("🇹"),
@@ -47,6 +48,7 @@ public class Tournament
         var allUsers = permanentGuildRole.Members.Select(m => (user: m, permanent: true))
             .Concat(guildAccessRole.Members.Select(m => (user: m, permanent: false)))
             .DistinctBy(m => m.user.Id)
+            .Where(m => m.user.Roles.Any(r => r.Id == Roles.GuildAccessRole || r.Id == Roles.PermanentGuildAccessRole))
             .ToArray();
         // var recentUserActivity = await new DatabaseService().GetLastSeen(allUsers.Select(u => u.user.Id), DateTimeOffset.UtcNow.AddDays(-3));
         return allUsers.Select(u => (
@@ -55,6 +57,14 @@ public class Tournament
           // probably come back to this.
           active: true // recentUserActivity.ContainsKey(u.user.Id)
           ));
+    }
+
+    public async Task<IEnumerable<(string user, bool permanent, bool active)>> TournamentContestantsInternalVersion()
+    {
+        // this one will use the database.
+        var db = new DatabaseService();
+        var (allUsers, usersById) = await db.GetGuildMembers();
+        return allUsers.Select(u => (usersById[u.UserId], !u.IsTemporary, true));
     }
 
     public async Task SelectTeams()
@@ -83,7 +93,7 @@ public class Tournament
 
         var today = DateTime.UtcNow.AddDays(1).Date;
         if (
-            (today.Month % 2 == 0 && today.Day <= 7) // first week of an even-numbered month
+            today.Month % 2 == 0 && today.Day <= 7 // first week of an even-numbered month
         )
         {
             maxTeams = 2;
@@ -148,6 +158,6 @@ public class Tournament
     {
         var channel = Guild.GetTextChannel(Channels.AllTeamsRallyRoom);
         var message = $"Attention all guilders\nDoing a current rank check-in for those seeing this notification.\nBe sure to include what tourney level you are playing in - along with other group details.\n... Who else do you see?\n... How much time is left?";
-        var msg = await channel.SendMessageAsync(message);
+        _ = await channel.SendMessageAsync(message);
     }
 }

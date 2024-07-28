@@ -11,7 +11,7 @@ public interface IDbUser
     public string? User_Nick { get; }
     public IEnumerable<SocketRole> Roles { get; }
 
-    public string Name() => User_Nick.IsNullOrEmpty() ? User_Name : User_Nick!;
+    public string Name() => (User_Nick.IsNullOrEmpty() ? User_Name : User_Nick!).FixName();
 }
 
 public class KnownUser
@@ -22,5 +22,5 @@ public class KnownUser
     public bool Is_Mod;
     public string? Player_Id;
 
-    public string Name() => User_Nick.IsNullOrEmpty() ? User_Name! : User_Nick!;
+    public string Name() => (User_Nick.IsNullOrEmpty() ? User_Name! : User_Nick!).FixName();
 }

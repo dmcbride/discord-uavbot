@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Dapper;
-using uav.logic.Database.Model;
 
 namespace uav.logic.Database;
 
@@ -42,11 +41,19 @@ partial class DatabaseService
             {
                 columnName = columnName.ToLower();
                 var columnNameNoUnderscore = columnName.Replace("_", "");
-                var result = type.GetProperties().Single(p => {
-                    var attrName = p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name.ToLower();
-                    return attrName == columnName || attrName == columnNameNoUnderscore;
-                });
-                return result;
+                try
+                {
+                    var result = type.GetProperties().Single(p =>
+                    {
+                        var attrName = p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name.ToLower();
+                        return attrName == columnName || attrName == columnNameNoUnderscore;
+                    });
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"Failed to map column {columnName} to property on type {type.Name}", e);
+                }
             });
             SqlMapper.SetTypeMap(type, map);
         }

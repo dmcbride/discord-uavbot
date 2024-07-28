@@ -7,8 +7,9 @@ echo "UAV BOT" > /proc/self/comm
 
 cd "${thisdir}"/uav.bot
 if dotnet publish -c Release -o "$mydir/release"; then
-  cd "$mydir/release"
-  dotnet uav.dll
+  # cd "$mydir/release"
+  # dotnet uav.dll
+  sudo /etc/init.d/uav restart
 else
   echo "Failed to build/publish"
 fi

@@ -1,14 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
 using uav.logic.Extensions;
-using uav.logic.Models;
 using uav.logic.Service;
+using Discord.Extensions.Extensions;
 
 namespace uav.bot.SlashCommand.Admin;
 
@@ -133,7 +132,7 @@ public class Admin : BaseAdminSlashCommand
         await RespondAsync($"Can't figure out a player ID for {user.Mention}, please contact Tanktalus", ephemeral: true);
     }
 
-    private byte[] key = new byte[] {
+    private readonly byte[] key = new byte[] {
         15, 23, 97, 156, 51
     };
 
@@ -142,11 +141,11 @@ public class Admin : BaseAdminSlashCommand
         var data = (string)options["d"].Value;
         var sig = (long)options["s"].Value;
 
-        var byteData = System.Convert.FromBase64String(data);
-        var actualData = System.Text.Encoding.UTF8.GetString(byteData);        
+        var byteData = Convert.FromBase64String(data);
+        var actualData = Encoding.UTF8.GetString(byteData);
 
         var hash = GetHashCode(byteData.Concat(key));
-        
+
         if (hash != sig)
         {
             await RespondAsync($"Invalid input.", ephemeral: true);

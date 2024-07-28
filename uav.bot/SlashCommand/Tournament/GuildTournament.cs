@@ -62,17 +62,20 @@ public class GuildTournament : BaseTournamentSlashCommand
             .AddOption("user", ApplicationCommandOptionType.User, "User to add/remove lion pet", isRequired: true)
             .AddOption("add", ApplicationCommandOptionType.Boolean, "True = add, False = remove", isRequired: true)
         )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("join")
+            .AddOption("permanent", ApplicationCommandOptionType.Boolean, "Join as a permanent member")
+            .WithDescription("Joins the next guild tournament if it is open, optionally all tournaments going forward")            
+            .WithType(ApplicationCommandOptionType.SubCommand)
+        )
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithName("leave")
+            .WithDescription("Leaves the upcoming guild tournament if it's still open")
+            .WithType(ApplicationCommandOptionType.SubCommand)
+        )
         // .AddOption(new SlashCommandOptionBuilder()
-        //     .WithName("join")
-        //     .WithDescription("Joins the next guild tournament if it is open")            
-        //     .WithType(ApplicationCommandOptionType.SubCommand)
-        // ).AddOption(new SlashCommandOptionBuilder()
-        //     .WithName("leave")
-        //     .WithDescription("Leaves the upcoming guild tournament if it's still open")
-        //     .WithType(ApplicationCommandOptionType.SubCommand)
-        // ).AddOption(new SlashCommandOptionBuilder()
         //     .WithName("add")
-        //     .WithDescription("Admin add user to tournament group")
+        //     .WithDescription("Admin add user to tournament group (admin only)")
         //     .WithType(ApplicationCommandOptionType.SubCommand)
         //     .AddOption("user-to-add", ApplicationCommandOptionType.User, "User to add")
         //     .AddOption(new SlashCommandOptionBuilder()
@@ -83,12 +86,14 @@ public class GuildTournament : BaseTournamentSlashCommand
         //         .AddChoice("Team 3", 3)
         //         .WithType(ApplicationCommandOptionType.Integer)
         //     )
-        // ).AddOption(new SlashCommandOptionBuilder()
+        // )
+        // .AddOption(new SlashCommandOptionBuilder()
         //     .WithName("remove")
-        //     .WithDescription("Admin remove user from tournament")
+        //     .WithDescription("Remove user from tournament (admin only)")
         //     .WithType(ApplicationCommandOptionType.SubCommand)
         //     .AddOption("user-to-remove", ApplicationCommandOptionType.User, "User to remove")
-        // ).AddOption(new SlashCommandOptionBuilder()
+        // )
+        // .AddOption(new SlashCommandOptionBuilder()
         //     .WithName("winner")
         //     .WithDescription("Admin set winner team")
         //     .WithType(ApplicationCommandOptionType.SubCommand)
@@ -99,8 +104,8 @@ public class GuildTournament : BaseTournamentSlashCommand
     public override Task Invoke(SocketSlashCommand command)
     {
         Func<SocketSlashCommand, Task> subCommand = SubCommandName switch {
-            // "join" => Join,
-            // "leave" => Leave,
+            "join" => Join,
+            "leave" => Leave,
             // "add" => Add,
             // "remove" => Remove,
             // "winner" => Winner,
@@ -179,6 +184,7 @@ public class GuildTournament : BaseTournamentSlashCommand
                 var msg = await _guild.GetTextChannel(905379297219473418ul).GetMessageAsync(900805354408009788ul);
                 Emote.TryParse("<:tbdcapitalplanet:852848079699050527>", out var tbdcapitalplanet);
                 var userGroups  = msg.GetReactionUsersAsync(tbdcapitalplanet, int.MaxValue);
+                await databaseService.CleanupTemporaryGuildMembers();
                 await foreach (var users in userGroups)
                 {
                     foreach (var user in users)
@@ -306,19 +312,59 @@ public class GuildTournament : BaseTournamentSlashCommand
         }
     }
 
-    // private async Task Join(SocketSlashCommand command)
-    // {
+    private async Task Join(SocketSlashCommand command)
+    {
+        var options = CommandArguments(command.Data.Options.First().Options);
+        var isPermanent = options.ContainsKey("permanent") && (bool)options["permanent"].Value;
 
-    // }
+        await databaseService.JoinGuilds(User.ToDbUser(), isPermanent);
+        await RespondAsync("You have joined the guild tournament.", ephemeral: true);
+        SetRoles(isPermanent ? Roles.PermanentGuildAccessRole : Roles.GuildAccessRole);
+    }
 
-    // private async Task Leave(SocketSlashCommand command)
-    // {
-        
-    // }
+    private async Task Leave(SocketSlashCommand command)
+    {
+        await databaseService.LeaveGuilds(User.ToDbUser());
+        await RespondAsync("You have left the guild tournament.", ephemeral: true);
+        SetRoles(0);
+    }
+
+    private void SetRoles(ulong desiredRole)
+    {
+        var currentRoles = User.Roles.Select(r => r.Id).ToHashSet();
+        foreach (var role in Roles.GuildRoles)
+        {
+            if (role == desiredRole)
+            {
+                if (!currentRoles.Contains(role))
+                {
+                    _ = User.AddRoleAsync(role);
+                }
+            }
+            else
+            {
+                if (currentRoles.Contains(role))
+                {
+                    _ = User.RemoveRoleAsync(role);
+                }
+            }
+        }
+    }
 
     // private async Task Add(SocketSlashCommand command)
     // {
-        
+    //     var allowed = IsInARole(Roles.AllMods, Roles.GuildHelper);
+    //     if (!allowed)
+    //     {
+    //         await RespondAsync("You do not have permissions to do this.", ephemeral: true);
+    //         return;
+    //     }
+
+    //     var options = CommandArguments(command.Data.Options.First().Options);
+    //     var user = (SocketGuildUser)options["user-to-add"].Value;
+    //     var teamNumber = (int)(long)options["team-number"].Value;
+
+
     // }
 
     // private async Task Remove(SocketSlashCommand command)

@@ -54,7 +54,6 @@ public class Poll : Job
         var pollResults = await _databaseService.GetPollResults(_nextPoll.PollId);
         var usersParticipating = await _databaseService.GetNumberOfUsersVotingFor(_nextPoll.PollId);
         var pollValues = _nextPoll.Options.Options.ToDictionary(o => o.Id, o => o.Text);
-        await _databaseService.CompletePoll(_nextPoll);
 
         await _client.GetGuild(_nextPoll.GuildId).GetTextChannel(_nextPoll.ChannelId).ModifyMessageAsync(
             _nextPoll.MsgId,
@@ -91,6 +90,8 @@ public class Poll : Job
                 .AddField("Results", $"```{GetPollResultsString(pollResults, pollValues)}\n```", false)
                 .Build()
         );
+
+        await _databaseService.CompletePoll(_nextPoll);
     }
 
     private static string GetPollResultsString(IEnumerable<DatabaseService.PollResults> pollResults, IDictionary<int, string> pollValues)

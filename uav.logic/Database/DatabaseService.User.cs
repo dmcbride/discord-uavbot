@@ -24,10 +24,10 @@ partial class DatabaseService
         VALUES (@User_Id, @User_Name, @User_Nick, @is_mod)
         ON DUPLICATE KEY
         UPDATE user_name = VALUES(user_name), user_nick = VALUES(user_nick), is_mod = VALUES(is_mod)", new {
-            User_Id = u.User_Id,
-            User_Name = u.User_Name,
-            User_Nick = u.User_Nick,
-            is_mod,
+          u.User_Id,
+          u.User_Name,
+          u.User_Nick,
+          is_mod,
         });
     }
 

@@ -21,4 +21,6 @@ public static class Support
                 .WithIsInline(false)
                 .WithName("\u200B")
                 .WithValue(Support.SupportStatement);
+
+    public const ulong SupportPerson = 410138719295766537ul;
 }

@@ -7,8 +7,8 @@ public class ExtractGvBaseCredits : TesseractExtractor<ExtractGvBaseCredits.Extr
 {
   public record ExtractedValues(GV gv, int credits);
 
-  private Regex gvExtractor = new Regex(@"Galaxy Value\s*\$(\d+\.?\d*[a-zA-Z]{1,2}|\d+\.?\d*E\+\d+)");
-  private Regex creditsExtractor = new Regex(@"Base Reward\s*(\d+)(?:\s*(\d+))");
+  private Regex gvExtractor = new(@"Galaxy\s+Value\s*\$(\d+\.?\d*(?:E\+\d+|[a-zA-Z]{1,2}|0))");
+  private Regex creditsExtractor = new(@"Base Reward\s*(\d+)(?:\s*(\d+))");
   protected override ExtractedValues? FindValues(string text)
   {
     if (string.IsNullOrWhiteSpace(text))
@@ -18,8 +18,15 @@ public class ExtractGvBaseCredits : TesseractExtractor<ExtractGvBaseCredits.Extr
     var gvMatch = gvExtractor.Match(text);
     var creditMatch = creditsExtractor.Match(text);
 
+    // sometimes tesseract thinks an ending O is a 0, so we'll fix that here.
+    var gvBase = gvMatch.Groups[1].Value;
+    if (gvBase.EndsWith("0") && !gvBase.Contains("E"))
+    {
+      gvBase = gvBase[..^1] + "O";
+    }
+
     if (gvMatch.Success && creditMatch.Success &&
-        GV.TryFromString(gvMatch.Groups[1].Value, out var gv, out _) &&
+        GV.TryFromString(gvBase, out var gv, out _) &&
         int.TryParse(creditMatch.Groups[1].Value, out var credits))
     {
       var creditService = new Credits();

@@ -10,7 +10,7 @@ namespace uav.logic.Service;
 public class Tesseract
 {
     private byte[]? data;
-    private string file;
+    private readonly string file;
 
     public Tesseract(string file)
     {
@@ -64,22 +64,22 @@ public class Tesseract
     {
         handleError ??= (reader) => reader.ReadToEndAsync();
 
-        var subproc = new Process();
-        subproc.StartInfo.FileName = filename;
-        subproc.StartInfo.Arguments = arguments;
-        subproc.StartInfo.RedirectStandardError = true;
-        subproc.StartInfo.RedirectStandardInput = true;
-        subproc.StartInfo.RedirectStandardOutput = true;
-        subproc.StartInfo.UseShellExecute = false;
-        subproc.Start();
+        var subProc = new Process();
+        subProc.StartInfo.FileName = filename;
+        subProc.StartInfo.Arguments = arguments;
+        subProc.StartInfo.RedirectStandardError = true;
+        subProc.StartInfo.RedirectStandardInput = true;
+        subProc.StartInfo.RedirectStandardOutput = true;
+        subProc.StartInfo.UseShellExecute = false;
+        subProc.Start();
 
-        var writing = subproc.StandardInput.BaseStream.WriteAsync(data);
-        var reading = handleOutput(subproc.StandardOutput);
-        var error = handleError(subproc.StandardError);
+        var writing = subProc.StandardInput.BaseStream.WriteAsync(data);
+        var reading = handleOutput(subProc.StandardOutput);
+        var error = handleError(subProc.StandardError);
 
         await writing;
-        subproc.StandardInput.Close();
-        await subproc.WaitForExitAsync();
+        subProc.StandardInput.Close();
+        await subProc.WaitForExitAsync();
         await Task.WhenAll(reading, error);
     }
 

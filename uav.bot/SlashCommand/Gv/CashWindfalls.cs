@@ -55,7 +55,7 @@ public class CashWindfalls : BaseGvSlashCommand
         var boost = 1 + (cw1 * 0.05);
         var (cws, newValue) = ArkCalculate(gvValue, goalGvValue, gvValue, 1 + (.1 * boost));
         var dmRequired = cws * 30;
-        var message = @$"To get to a GV of {goalGvValue} from {gvValue} with a {100 * (boost - 1)}% boost from your space station, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
+        var message = @$"To get to a GV of {goalGvValue} from {gvValue} with a {(int)(100 * (boost - 1))}% boost from your space station, you need {cws} {IpmEmoji.boostcashwindfall} boosts which will take you to {newValue}. This may cost up to {dmRequired} {IpmEmoji.ipmdm}
 
 {Support.SupportStatement}";
         var embed = new EmbedBuilder()
