@@ -16,11 +16,12 @@ class UAV
 {
     private DiscordSocketClient _client;
     private uav.bot.Periodic.IpmUpdate _updateChecker;
-    private readonly static string? secret = Environment.GetEnvironmentVariable("uav_secret");
+    private static string? secret => logic.Configuration.Config.GetConfig("discord:secret");
 
     public UAV()
     {
         SetupLog4Net();
+        logic.Configuration.Config.LoadConfigs<Program>("Development");
 
         var config = new DiscordSocketConfig
         {

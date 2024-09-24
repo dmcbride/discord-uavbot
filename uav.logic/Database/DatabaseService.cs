@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Dapper;
 using MySql.Data.MySqlClient;
 using uav.logic.Database.Model;
@@ -11,8 +10,8 @@ namespace uav.logic.Database;
 
 public partial class DatabaseService
 {
-    private string? connectionString = Environment.GetEnvironmentVariable("uav_dbConnection");
-    private MySqlConnection Connect => new MySqlConnection(connectionString);
+    private string? connectionString => Configuration.Config.GetConfig("db:connection");
+    private MySqlConnection Connect => new(connectionString);
 
     private struct Table
     {

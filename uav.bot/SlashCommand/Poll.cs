@@ -263,7 +263,7 @@ public class Poll : BaseSlashCommandWithSubcommands
             await RespondAsync("Poll not found", ephemeral: true);
             return;
         }
-        var userId = Interaction.User.Id;
+
         var pollNames = poll.Options.Options.ToDictionary(o => o.Id, o => o.Text);
 
         var results = await databaseService.GetDetailedPollResults(poll.PollId);
