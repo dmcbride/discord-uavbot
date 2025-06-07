@@ -1,41 +1,39 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using uav.logic.Models;
 
 namespace uav.test
 {
-    [TestClass]
     public class GvTest
     {
-        [DataTestMethod]
-        [DataRow("100q")]
-        [DataRow("100Q")]
-        [DataRow("1E+85")]
-        [DataRow("1E+15")]
-        public void RoundTrip(string v)
+        [Test]
+        [Arguments("100q")]
+        [Arguments("100Q")]
+        [Arguments("1E+85")]
+        [Arguments("1E+15")]
+        public async Task RoundTrip(string v)
         {
             var parsed = GV.TryFromString(v, out var gv, out var msg);
-            Assert.IsTrue(parsed);
-            StringAssert.Contains(gv!.ToString(), v);
+            await Assert.That(parsed).IsTrue();
+            await Assert.That(gv!.ToString()).Contains(v);
         }
 
-        [DataTestMethod]
-        [DataRow("1k", "1E+3")]
-        public void Converts(string v, string expected)
+        [Test]
+        [Arguments("1k", "1E+3")]
+        public async Task Converts(string v, string expected)
         {
             var parsed = GV.TryFromString(v, out var gv, out var msg);
-            Assert.IsTrue(parsed);
-            StringAssert.Contains(gv!.ToString(), expected);
+            await Assert.That(parsed).IsTrue();
+            await Assert.That(gv!.ToString()).Contains(expected);
         }
 
-        [TestMethod]
-        public void Tier()
+        [Test]
+        public async Task Tier()
         {
             GV.TryFromString("10M", out var gv, out var msg);
-            Assert.AreEqual(1, gv!.TierNumber);
+            await Assert.That(gv!.TierNumber).IsEqualTo(1);
         }
 
-        [TestMethod]
-        public void regex_test()
+        [Test]
+        public async Task regex_test()
         {
           var text = @"Estimating resolution as 443
 SELL GALAXY
@@ -62,7 +60,7 @@ Cargo x12.25
           var gvExtractor = new System.Text.RegularExpressions.Regex(@"Galaxy\s+Value\s*\$(\d+\.?\d*(?:E\+\d+|[a-zA-Z]{1,2}|0))");
           var gvMatch = gvExtractor.Match(text);
           var gvBase = gvMatch.Groups[1].Value;
-          Assert.AreEqual("3.6E+24", gvBase);
+          await Assert.That(gvBase).IsEqualTo("3.6E+24");
         }
     }
 }

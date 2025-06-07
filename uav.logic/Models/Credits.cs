@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MathNet.Numerics;
 using uav.logic.Database;
+using uav.IPM.Core;
 
 namespace uav.logic.Models
 {
@@ -84,16 +85,23 @@ namespace uav.logic.Models
                 return (-1, false);
             }
 
-            var xdata = data.Select(d => d.gv).ToArray();
-            var ydata = data.Select(d => (double)d.base_credits).ToArray();
+            var xData = data.Select(d => d.gv).ToArray();
+            var yData = data.Select(d => (double)d.base_credits).ToArray();
 
-            var (b, m) = Fit.Line(xdata, ydata);
+            var (b, m) = Fit.Line(xData, yData);
             if (b > minGv)
             {
                 return (-1, false);
             }
 
             return ((int) Math.Floor(m * gv + b), false);
+        }
+
+        public int CreditsForGv(GV gv)
+        {
+            var prestige = new Prestige(gv);
+            prestige.CalculateGalaxyValue();
+            return prestige.prestigePointsBase;
         }
 
         // public int CreditsFor(double gv)

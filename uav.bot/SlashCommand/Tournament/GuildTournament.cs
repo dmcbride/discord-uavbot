@@ -263,7 +263,7 @@ public class GuildTournament : BaseTournamentSlashCommand
         var msg = guildMessages.NextOccurring(now);
         var nextTime = msg!.NextTime(now)!;
 
-        var embed = EmbedBuilder("Tournament Guild", string.Format(msg!.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime.Value - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
+        var embed = EmbedBuilder("Tournament Guild", string.Format(msg!.Message, uav.logic.Models.Tournament.SpanToReadable(nextTime - now)) + $"\n\n{Support.SupportStatement}", Color.DarkGreen);
 
         return RespondAsync(embed: embed.Build(), ephemeral: ephemeral);
     }

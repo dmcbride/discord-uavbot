@@ -1,14 +1,11 @@
 using System;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using uav.Schedule;
 
 namespace uav.test.Scheduler;
 
-[TestClass]
 public class SchedulerTests
 {
-    [TestMethod]
+    [Test]
     public async Task Scheduler_Should_Wait()
     {
         var scheduler = new uav.Schedule.Scheduler();
@@ -19,8 +16,7 @@ public class SchedulerTests
 
         await Task.Delay(3000);
 
-
-        Assert.AreEqual(0, job.calls);
+        await Assert.That(job.calls).IsEqualTo(0);
     }
 
     private class TestJob : Job

@@ -1,31 +1,31 @@
+using System;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 using uav.logic.Database.Model;
 
 namespace uav.logic.tests.Database.Model
 {
-    [TestClass]
     public class UserConfigTests
     {
-      [TestMethod]
-      [DynamicData(nameof(TestCalculateCreditsData), DynamicDataSourceType.Method)]
-      public void TestCalculateCredits(UserConfig userConfig, int baseCredits, (int totalCredits, int loungeBonus, int station, int exodus) expected)
+      [Test]
+      [MethodDataSource(typeof(UserConfigTests), nameof(TestCalculateCreditsData))]
+      public async Task TestCalculateCredits(UserConfig userConfig, int baseCredits, (int totalCredits, int loungeBonus, int station, int exodus) expected)
       {
           // Act
           var result = userConfig.CalculateCredits(baseCredits);
           var reverse = userConfig.CalculateBaseCredits(result.totalCredits);
 
           // Assert
-          Assert.AreEqual(expected.loungeBonus, result.loungeBonus, $"Lounge bonus was {result.loungeBonus}.");
-          Assert.AreEqual(expected.station, result.station, $"Station was {result.station}.");
-          Assert.AreEqual(expected.exodus, result.exodus, $"Exodus was {result.exodus}.");
-          Assert.AreEqual(expected.totalCredits, result.totalCredits, $"Total credits was {result.totalCredits}.");
+          await Assert.That(result.loungeBonus).IsEqualTo(expected.loungeBonus);
+          await Assert.That(result.station).IsEqualTo(expected.station);
+          await Assert.That(result.exodus).IsEqualTo(expected.exodus);
+          await Assert.That(result.totalCredits).IsEqualTo(expected.totalCredits);
 
-          Assert.AreEqual(baseCredits, reverse, $"Reverse was {reverse}.");
+          await Assert.That(reverse).IsEqualTo(baseCredits);
       }
-      private static IEnumerable<object[]> TestCalculateCreditsData()
+      public static IEnumerable<Func<(UserConfig userConfig, int baseCredits, (int totalCredits, int loungeBonus, int station, int exodus) expected)>> TestCalculateCreditsData()
       {
-          yield return new object[] {
+          yield return () => (
             new UserConfig {
                 LoungeLevel = 40,
                 HasExodus = true,
@@ -34,9 +34,9 @@ namespace uav.logic.tests.Database.Model
             },
             812,
             (totalCredits: 5966, loungeBonus: 1705, station: 466, exodus: 2983)
-            };
+          );
 
-          yield return new object[] {
+          yield return () => (
             new UserConfig {
                 LoungeLevel = 0,
                 HasExodus = false,
@@ -45,9 +45,9 @@ namespace uav.logic.tests.Database.Model
             },
             812,
             (totalCredits: 812, loungeBonus: 0, station: 0, exodus: 0)
-          };
+          );
 
-          yield return new object[] {
+          yield return () => (
             new UserConfig {
                 LoungeLevel = 40,
                 HasExodus = true,
@@ -56,9 +56,9 @@ namespace uav.logic.tests.Database.Model
             },
             0,
             (totalCredits: 0, loungeBonus: 0, station: 0, exodus: 0)
-          };
+          );
 
-          yield return new object[] {
+          yield return () => (
             new UserConfig {
                 LoungeLevel = 40,
                 HasExodus = true,
@@ -67,7 +67,7 @@ namespace uav.logic.tests.Database.Model
             },
             838,
             (totalCredits: 6158, loungeBonus: 1760, station: 481, exodus: 3079)
-          };
+          );
       }
     }
 }

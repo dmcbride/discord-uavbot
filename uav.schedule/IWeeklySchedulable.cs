@@ -56,7 +56,7 @@ public static class IWeeklySchedulableExtensions
         return false;
     }
 
-    public static DateTimeOffset? NextTime(this IWeeklySchedulable job, DateTime now)
+    public static DateTimeOffset NextTime(this IWeeklySchedulable job, DateTime now)
     {
         var nextTime = now.Date.AddDays(job.Day - now.DayOfWeek);
         if (job.Time != null)

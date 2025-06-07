@@ -37,7 +37,6 @@ public static class Roles
 
     public static readonly ISet<ulong> AllMods = new HashSet<ulong> {
         Moderator,
-        DedicatedToTheGame,
         HelperMod,
         Helper,
         TraineeHelper,
@@ -47,7 +46,6 @@ public static class Roles
         Developer,
         Moderator,
         Helper,
-        DedicatedToTheGame,
     };
 
     public static readonly ulong GameRegistered = 980560129772650548ul;

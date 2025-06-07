@@ -11,7 +11,8 @@ namespace uav.logic.Constants
         public static readonly string boostcashwindfall = "<:boostcashwindfall:642974216681029644>";
         public static readonly string warning = "⚠️";
         public static readonly string itemTP = "<:item30teleporterTP:1220146420040863835>";
-        public static readonly string itemFR = "<:item32subspaceRelaySR:1223487433975533568>";
+        public static readonly string itemSR = "<:item32subspaceRelaySR:1223487433975533568>";
+        public static readonly string itemAR = "<:item33advancedRobotAR:1238242851536638044>";
         public static readonly string ipmCredits = "<:ipmCredits:530812982004023306>";
         public static readonly string partying_face = "🥳";
         public static readonly string tada = "🎉";

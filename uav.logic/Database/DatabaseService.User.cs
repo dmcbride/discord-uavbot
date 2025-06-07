@@ -96,7 +96,12 @@ partial class DatabaseService
         credits_5,
         credits_6,
         credits_7,
-        credits_8
+        credits_8,
+        credits_9,
+        credits_10,
+        credits_11,
+        credits_12,
+        credits_13
     ) VALUES (
         @UserId,
         @LoungeLevel,
@@ -108,7 +113,12 @@ partial class DatabaseService
         @Credits5,
         @Credits6,
         @Credits7,
-        @Credits8
+        @Credits8,
+        @Credits9,
+        @Credits10,
+        @Credits11,
+        @Credits12,
+        @Credits13
     ) ON DUPLICATE KEY UPDATE
         lounge_level = VALUES(lounge_level),
         has_exodus = VALUES(has_exodus),
@@ -119,7 +129,20 @@ partial class DatabaseService
         credits_5 = VALUES(credits_5),
         credits_6 = VALUES(credits_6),
         credits_7 = VALUES(credits_7),
-        credits_8 = VALUES(credits_8)
+        credits_8 = VALUES(credits_8),
+        credits_9 = VALUES(credits_9),
+        credits_10 = VALUES(credits_10),
+        credits_11 = VALUES(credits_11),
+        credits_12 = VALUES(credits_12),
+        credits_13 = VALUES(credits_13)
 ", uc);
+    }
+
+    public async Task<KnownUser> GetUserFromPlayerId(string playerId)
+    {
+        using var connection = Connect;
+        return await connection.QuerySingleOrDefaultAsync<KnownUser>($@"SELECT * FROM {Table.Users} WHERE player_id = @playerId", new {
+            playerId
+        });
     }
 }

@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using uav.Schedule;
 
 namespace uav.test.Scheduler;
 
-[TestClass]
 public class WeeklyJobsTests
 {
     private class TestWeeklyJob : WeeklyJobs
@@ -41,7 +38,7 @@ public class WeeklyJobsTests
         public string NowLooksLike() => $"{Now.DayOfWeek} @ {Now.TimeOfDay}";
     }
 
-    [TestMethod]
+    [Test]
     public async Task WeeklyJobs_Should_HandleTimes()
     {
         var j = new TestWeeklyJob();
@@ -49,52 +46,52 @@ public class WeeklyJobsTests
         j.FakeNow = DateTime.Now.Date;
         j.AddDays(-(int)j.FakeNow.DayOfWeek); // this should bring us to Sunday midnight.
 
-        Assert.AreEqual("1", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("1").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("3", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("3").Because(j.NowLooksLike());
 
         j.AddHours(1);
-        Assert.AreEqual("2", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("2").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("1", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("1").Because(j.NowLooksLike());
 
         j.AddHours(12);
-        Assert.AreEqual("F12", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("F12").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("2", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("2").Because(j.NowLooksLike());
 
         j.StartOf(DayOfWeek.Friday);
-        Assert.AreEqual("F12", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("F12").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("2", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("2").Because(j.NowLooksLike());
 
         j.AddHours(13);
-        Assert.AreEqual("3", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("3").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("F12", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("F12").Because(j.NowLooksLike());
 
         j.StartOf(DayOfWeek.Saturday);
-        Assert.AreEqual("3", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("3").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("3", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("3").Because(j.NowLooksLike());
 
         j.AddDays(1);
-        Assert.AreEqual("1", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("1").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("3", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("3").Because(j.NowLooksLike());
     }
 
     private record JobType(DayOfWeek Day, TimeOnly? Time = null) : IWeeklySchedulable;
 
-    [TestMethod]
-    public void IWeeklySchedulable_Should_Work()
+    [Test]
+    public async Task IWeeklySchedulable_Should_Work()
     {
         var now = DT(DayOfWeek.Friday, 0, 30);
         var job = new JobType(DayOfWeek.Friday, new TimeOnly(12, 0));
-        Assert.IsTrue(job.IsUpcoming(now));
+        await Assert.That(job.IsUpcoming(now)).IsTrue();
 
         var nextTime = job.NextTime(now);
-        Assert.IsTrue(nextTime - now < new TimeSpan(24, 0, 0), $"Next time: {nextTime}; now: {now}");
+        await Assert.That(nextTime - now).IsLessThan(new TimeSpan(24, 0, 0));
     }
 
     private static DateTime _now = DateTime.UtcNow;

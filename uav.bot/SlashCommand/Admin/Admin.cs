@@ -8,12 +8,13 @@ using uav.logic.Constants;
 using uav.logic.Extensions;
 using uav.logic.Service;
 using Discord.Extensions.Extensions;
+using log4net.Core;
+using log4net;
 
 namespace uav.bot.SlashCommand.Admin;
 
 public class Admin : BaseAdminSlashCommand
 {
-    
     public override SlashCommandBuilder CommandBuilder => new SlashCommandBuilder()
         .WithDescription("Admin tools")
         .AddOption(
@@ -26,6 +27,13 @@ public class Admin : BaseAdminSlashCommand
                 .AddOption("user3", ApplicationCommandOptionType.User, "User", isRequired: false)
                 .AddOption("user4", ApplicationCommandOptionType.User, "User", isRequired: false)
                 .AddOption("user5", ApplicationCommandOptionType.User, "User", isRequired: false)
+        )
+        .AddOption(
+            new SlashCommandOptionBuilder()
+                .WithName("user-from-player-id")
+                .WithDescription("Retrieve user from player ID")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("player-id", ApplicationCommandOptionType.String, "Player ID", isRequired: true)
         )
         .AddOption(
             new SlashCommandOptionBuilder()
@@ -74,9 +82,35 @@ public class Admin : BaseAdminSlashCommand
             "register-another-user" => RegisterOther,
             "remove-user-hint" => RemoveUserHint,
             "test" => Render,
+            "user-from-player-id" => UserFromPlayerId,
             _ => throw new NotImplementedException(),
         };
         return subCommand(command, options);
+    }
+
+    private async Task UserFromPlayerId(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> dictionary)
+    {
+        var playerId = (string)dictionary["player-id"].Value;
+        logger.Info($"UserFromPlayerId: {playerId}");
+        await DeferAsync(ephemeral: true);
+        try
+        {
+            var user = await databaseService.GetUserFromPlayerId(playerId);
+            logger.Info($"UserFromPlayerId: {user?.User_Id}");
+            if (user == null)
+            {
+                logger.Info($"UserFromPlayerId: No user found for player ID {playerId}");
+                await RespondAsync($"No user found for player ID {playerId}", ephemeral: true);
+                return;
+            }
+            logger.Info($"UserFromPlayerId: User found for player ID {playerId}: {user.User_Id}");
+            await RespondAsync($"User found for player ID {playerId}: <@{user.User_Id}>", ephemeral: true);
+        }
+        catch (Exception e)
+        {
+            logger.Error($"UserFromPlayerId: {e.Message}");
+            await RespondAsync($"Error: {e.Message}", ephemeral: true);
+        }
     }
 
     private async Task PlayerId(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)

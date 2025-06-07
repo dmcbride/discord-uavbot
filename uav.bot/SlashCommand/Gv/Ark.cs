@@ -41,6 +41,13 @@ public class Ark : BaseGvSlashCommand
                 .WithMaxValue(24)
         });
 
+    private const double gvArk = 0.02295d;
+    private const double cohArk = 0.0475d;
+
+    // the cross-over point between gv and coh arks. This is the point where the gv ark value is greater than the coh ark value.
+    // gv * gvArk = gv * coh * cohArk
+    private const double cohGreaterThanGvArk = gvArk / cohArk;
+
     public override async Task Invoke(SocketSlashCommand command)
     {
         var options = CommandArguments(command);
@@ -69,19 +76,19 @@ public class Ark : BaseGvSlashCommand
             return;
         }
 
-        if (cashValue < gvValue * 0.49)
+        if (cashValue < gvValue * cohGreaterThanGvArk)
         {
-            await RespondAsync($"This calculator does not (yet) handle cash-on-hand under 40% of your current GV. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemTP} and {IpmEmoji.itemFR} first.", ephemeral: true);
+            await RespondAsync($"This calculator does not (yet) handle the scenario where you are still using the gv ark value instead of the cash-on-hand ark value, at about {100 * cohGreaterThanGvArk:f1}% COH. You are better off not arking yet anyway. Focus on ores and getting to the end-game items, such as {IpmEmoji.itemSR} and {IpmEmoji.itemAR} first.", ephemeral: true);
             return;
         }
 
-        var (arks, newValue) = ArkCalculate(gvValue, goalGvValue, cashValue, 1.0475d);
+        var (arks, newValue) = ArkCalculate(gvValue, goalGvValue, cashValue, 1 + cohArk);
 
         // here we're assuming that you get about 7 cash arks per hour (6 minutes per ark, 10 arks per hour, 70% cash)
         var minHours = Math.Floor(arks / (cashArkChance * arksPerHour));
         var maxHours = Math.Ceiling(arks / (cashArkChance * arksPerHour));
-        var hours = minHours == maxHours 
-            ? $"{minHours} hour{(minHours == 1 ? string.Empty:"s")}"
+        var hours = minHours == maxHours
+            ? $"{minHours} hour{(minHours == 1 ? string.Empty : "s")}"
             : minHours == 0
             ? $"1 hour or less"
             : $"{minHours} - {maxHours} hours";
@@ -91,7 +98,7 @@ public class Ark : BaseGvSlashCommand
             var minDays = Math.Floor(minHours / hoursPerDay.Value);
             var maxDays = Math.Ceiling(maxHours / hoursPerDay.Value);
             var days = minDays == maxHours
-                ? $"{minDays} day{(minDays == 1 ? string.Empty:"s")}"
+                ? $"{minDays} day{(minDays == 1 ? string.Empty : "s")}"
                 : minDays == 0
                 ? $"1 day or less"
                 : $"{minDays} - {maxDays} days";

@@ -39,8 +39,11 @@ public class Tournament
 
     private readonly DiscordSocketClient? _client;
 
+    public Task<IEnumerable<(SocketGuildUser user, bool permanent, bool active)>> TournamentContestants() =>
+        TournamentContestantsRoleBased();
+
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    public async Task<IEnumerable<(SocketGuildUser user, bool permanent, bool active)>> TournamentContestants()
+    public async Task<IEnumerable<(SocketGuildUser user, bool permanent, bool active)>> TournamentContestantsRoleBased()
 #pragma warning restore CS1998
     {
         var guildAccessRole = Guild.GetRole(Roles.GuildAccessRole);
@@ -152,6 +155,9 @@ public class Tournament
             reactions = GoTeamEmojis.AndThen(IpmEmoji.Team(teamNumber)).ToArray();
             await msg.AddReactionsAsync(reactions);
         }
+
+        // auto cleanup temporary users.
+        await new DatabaseService().CleanupTemporaryGuildMembers();
     }
 
     public async Task CheckInNotification()

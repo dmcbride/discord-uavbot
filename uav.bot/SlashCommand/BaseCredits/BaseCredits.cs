@@ -1,13 +1,10 @@
-
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using uav.logic.Constants;
-using uav.logic.Database;
 using uav.logic.Models;
 using uav.logic.Service;
 
@@ -69,7 +66,7 @@ public class BaseCredits : BaseSlashCommand
                 return RespondAsync($"Invalid GV.{(error != null ? $"\n{error}" : string.Empty)}");
             }
 
-            if (gv < 10_000_000 || gv > 1e109)
+            if (gv < 10_000_000 || gv > 1e219)
             {
                 return RespondAsync($"Invalid GV. GV must be between 10M and 1E+109", ephemeral: true);
             }
@@ -153,13 +150,11 @@ public class BaseCredits : BaseSlashCommand
 
     private async Task CreditsFor(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        // see if we have any user config.
         var userConfig = await databaseService.GetUserConfig(command.User.ToDbUser());
 
-        // by this point, we've already validated it once, so we're good.
         GV.TryFromString((string)options["gv"].Value, out var gv, out var _);
-        
-        var msg = await arkService.QueryCreditRange(gv!, userConfig);
+
+        var msg = arkService.QueryCreditRangeNew(gv!, userConfig);
 
         await RespondAsync(msg);
         return;
@@ -167,16 +162,17 @@ public class BaseCredits : BaseSlashCommand
 
     private async Task GvFor(SocketSlashCommand command, IDictionary<string, SocketSlashCommandDataOption> options)
     {
-        var baseCredits = (int)(long)options["credits"].Value;
-        var gv = await arkService.GVRequiredForCredits(baseCredits);
+        var credits = (int)(long)options["credits"].Value;
+        var userConfig = await databaseService.GetUserConfig(command.User.ToDbUser());
+        var gv = arkService.GVRequiredForCredits(credits, userConfig);
 
         if (gv == GV.Zero)
         {
-            await RespondAsync($"There is not yet enough information to guess the GV for {baseCredits}");
+            await RespondAsync($"Failed to find a GV for {credits}");
             return;
         }
 
-        var msg = $"By my calculations, it appears you can get {baseCredits} {IpmEmoji.ipmCredits} with a GV of approximately **${gv}**.";
+        var msg = $"By my calculations, it appears you can get {credits} {IpmEmoji.ipmCredits} total with a GV of approximately **${gv}**.";
 
         await RespondAsync(msg);
     }

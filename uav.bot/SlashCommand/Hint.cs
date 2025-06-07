@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.Caching;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Extensions.Extensions;
@@ -151,9 +152,21 @@ public class Hint : BaseSlashCommand
             return;
         }
         user ??= Guild!.GetUser(hint.UserId);
+
+        var hintEmbedText = new StringBuilder();
+        hintEmbedText.AppendLine(hint.HintText);
+        hintEmbedText.AppendLine();
+        hintEmbedText.AppendLine($"by {user.Mention}");
+        hintEmbedText.AppendLine($"Created: {TimestampTag.FormatFromDateTimeOffset(hint.Created, TimestampTagStyles.LongDateTime)}");
+        if (hint.Updated != hint.Created)
+        {
+            hintEmbedText.AppendLine($"Last Updated: {TimestampTag.FormatFromDateTimeOffset(hint.Updated, TimestampTagStyles.LongDateTime)}");
+        }
+        hintEmbedText.AppendLine(Support.SupportStatement);
+
         var embed = new EmbedBuilder()
             .WithTitle(hint.Title)
-            .WithDescription($"(shortcut: {hint.HintName})\n\n{hint.HintText}\n\nby {user.Mention}")
+            .WithDescription(hintEmbedText.ToString())
             .Build();
         
         // for now, only show registered-users' hints. Probably should use a different role for this.

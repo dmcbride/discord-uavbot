@@ -8,8 +8,10 @@
     "cSpell.words": [
       "Cacheable",
       "colorspace",
+      "homebase",
       "ipmgalaxy",
       "Leaderboards",
+      "Mathf",
       "Mothership",
       "oopsed",
       "Tanktalus",
@@ -20,4 +22,5 @@
       "winstreak",
       "Wordle"
     ],
+    "makefile.configureOnOpen": false,
 }

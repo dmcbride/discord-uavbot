@@ -24,7 +24,7 @@ public abstract class WeeklyJobs : Job
         var now = Now;
         var nextJob = NextJobDescription();
 
-        return Task.FromResult(nextJob.NextTime(now));
+        return Task.FromResult<DateTimeOffset?>(nextJob.NextTime(now));
     }
 
     private JobDescription ThisJobDescription()

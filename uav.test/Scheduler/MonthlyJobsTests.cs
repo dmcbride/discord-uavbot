@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using uav.Schedule;
 
 namespace uav.test.Scheduler;
 
-[TestClass]
 public class MonthlyJobsTests
 {
     private class TestMonthlyJob : MonthlyJobs
@@ -49,7 +46,7 @@ public class MonthlyJobsTests
         public string NowLooksLike() => $"{Now.Day} @ {Now.TimeOfDay}";
     }
 
-    [TestMethod]
+    [Test]
     public async Task MonthlyJobs_Should_HandleTimes()
     {
         var j = new TestMonthlyJob();
@@ -57,50 +54,52 @@ public class MonthlyJobsTests
         j.FakeNow = new DateTime(2022, 3, 28, 0, 30, 0);
         j.AddDays(-(int)j.FakeNow.Day + 1); // this should bring us to midnight beginning of month.
 
-        Assert.AreEqual("1", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("1").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("4", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("4").Because(j.NowLooksLike());
 
         j.AddHours(1);
-        Assert.AreEqual("2", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("2").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("1", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("2").Because(j.NowLooksLike());
 
         j.AddHours(12);
-        Assert.AreEqual("3", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("3").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("2", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("2").Because(j.NowLooksLike());
 
         j.StartOf(28);
-        Assert.AreEqual("3", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("3").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("3", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("3").Because(j.NowLooksLike());
 
         j.AddDays(1);
-        Assert.AreEqual("4", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("4").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("3", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("3").Because(j.NowLooksLike());
 
         j.AddHours(13);
-        Assert.AreEqual("1", j.Name, j.NowLooksLike());
+        await Assert.That(j.Name).IsEqualTo("1").Because(j.NowLooksLike());
         await j.Run();
-        Assert.AreEqual("4", j.LastAction, j.NowLooksLike());
+        await Assert.That(j.LastAction).IsEqualTo("4").Because(j.NowLooksLike());
     }
 
     private record JobType(int RelativeDay, TimeOnly? Time = null) : IMonthlySchedulable;
 
-    [TestMethod]
-    public void IMonthlySchedulable_Should_Work()
+    [Test]
+    public async Task IMonthlySchedulable_Should_Work()
     {
         var now = new DateTime(2022, 3, 28, 0, 30, 0);
         var job = new JobType(-3, new TimeOnly(12, 0));
-        Assert.IsTrue(job.IsUpcoming(now));
+        await Assert.That(job.IsUpcoming(now)).IsTrue();
 
-        var nextTime = job.NextTime(now);
-        Assert.IsTrue(nextTime - now < new TimeSpan(24, 0, 0), $"Next time: {nextTime}; now: {now}");
+        var nextTimeNullable = job.NextTime(now);
+        await Assert.That(nextTimeNullable).IsNotNull();
+        var nextTime = nextTimeNullable!.Value;
+        await Assert.That(nextTime! - now).IsLessThan(new TimeSpan(24, 0, 0));
 
         job = new JobType(1, null);
-        nextTime = job.NextTime(now);
-        Assert.IsTrue(nextTime > now);
+        nextTime = job.NextTime(now)!.Value;
+        await Assert.That(nextTime).IsGreaterThan(now);
     }
 }

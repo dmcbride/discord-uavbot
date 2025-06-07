@@ -39,7 +39,7 @@ public class Stats : BaseSlashCommand
         var usersById = new Dictionary<ulong, SocketGuildUser>();
         foreach (var role in starredRoles)
         {
-            foreach (var user in role.Members)
+            foreach (var user in role.Members.Where(m => m.Id != 96626874708430848ul)) // skip Pog. He cheats.
             {
                 if (!roleCountByUser.ContainsKey(user.Id))
                 {

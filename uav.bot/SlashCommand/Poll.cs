@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using log4net;
+using log4net.Core;
 using uav.bot.Attributes;
 using uav.logic.Extensions;
 
@@ -285,6 +287,14 @@ public class Poll : BaseSlashCommandWithSubcommands
             embed.AddField(pollNames[r.vote], votesString);
         }
 
-        await RespondAsync(embed: embed.Build(), ephemeral: true);
+        try {
+            var dm = await User.CreateDMChannelAsync();
+            await dm.SendMessageAsync(embed: embed.Build());
+
+            await RespondAsync("Sent via DM", ephemeral: true);
+        } catch (Exception e) {
+            logger.Error("Failed to send via DM", e);
+            await RespondAsync("Failed to send via DM. Consider allowing UAV to send you DMs.", ephemeral: true);
+        }        
    }
 }

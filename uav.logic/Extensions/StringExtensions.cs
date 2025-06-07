@@ -10,8 +10,7 @@ public static partial class StringExtensions
 
     public static string IfNullOrEmptyThen(this string? s, string fallback) => s.IsNullOrEmpty() ? fallback : s!;
 
-    private static Regex slashCommandDashLocator = new Regex(@"(?<=[a-z])\s?(?=[A-Z])");
-    public static string ToSlashCommand(this string s) => slashCommandDashLocator.Replace(s, "-").ToLower();
+    public static string ToSlashCommand(this string s) => SlashCommandDashLocator().Replace(s, "-").ToLower();
 
     public static StringBuilder SafeAppend(this StringBuilder sb, string s)
     {
@@ -35,4 +34,7 @@ public static partial class StringExtensions
     [GeneratedRegex(@"(?=[*_])")]
     private static partial Regex FixNameRegex();
     public static string FixName(this string name) => FixNameRegex().Replace(name, "\\");
+
+    [GeneratedRegex(@"(?<=[a-z])\s?(?=[A-Z])")]
+    private static partial Regex SlashCommandDashLocator();
 }
