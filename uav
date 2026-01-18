@@ -1,7 +1,7 @@
 #!/sbin/openrc-run
 
 dir="/home/dmcbride/prj/uav/release"
-command=". ~/.bash_profile; . /share/prj/uav/setup.sh; cd ${dir}; dotnet uav.dll"
+command=". ~/.bash_profile; . /share/prj/uav/setup.sh; cd ${dir}; dotnet-bin-10.0 uav.dll"
 
 depends() {
   need net mysql

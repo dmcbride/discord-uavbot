@@ -63,7 +63,7 @@ partial class DatabaseService
         });
     }
 
-    public async Task<KnownUser> GetUser(ulong User_Id)
+    public async Task<KnownUser?> GetUser(ulong User_Id)
     {
         using var connection = Connect;
         return await connection.QuerySingleOrDefaultAsync<KnownUser>($@"SELECT * FROM {Table.Users} WHERE user_id = @User_Id", new {
@@ -138,7 +138,7 @@ partial class DatabaseService
 ", uc);
     }
 
-    public async Task<KnownUser> GetUserFromPlayerId(string playerId)
+    public async Task<KnownUser?> GetUserFromPlayerId(string playerId)
     {
         using var connection = Connect;
         return await connection.QuerySingleOrDefaultAsync<KnownUser>($@"SELECT * FROM {Table.Users} WHERE player_id = @playerId", new {

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using log4net;
 
 namespace uav.logic.Service;
 
@@ -11,10 +12,20 @@ public class Tesseract
 {
     private byte[]? data;
     private readonly string file;
+    private static readonly ILog logger = LogManager.GetLogger(typeof(Tesseract));
 
     public Tesseract(string file)
     {
         this.file = file;
+    }
+
+    private string? _tesseractExtraParameters = null;
+    public string TesseractExtraParameters
+    {
+        set
+        {
+            _tesseractExtraParameters = value;
+        }
     }
 
     public async Task<string?> RunTesseract(string? sharpen = null)
@@ -44,16 +55,24 @@ public class Tesseract
         return await ReadAllBytesAsync(fs);
     }
 
-    public static async Task<string?> RunTesseract(byte[] data, string? sharpen = null)
+    public async Task<string?> RunTesseract(byte[] data, string? sharpen = null)
     {
         sharpen = sharpen == null ? string.Empty : $" -sharpen {sharpen}";
-        await RunBinarySubprocess("/usr/bin/convert", $"- -set colorspace Gray -separate -average{sharpen} -", data, async (r) => {
-          // was -alpha off{sharpen} -negate
+        var convertCmd = "/usr/bin/convert";
+        var convertArgs = $"- -set colorspace Gray -separate -average{sharpen} -";
+        logger.Debug($"Running convert command: {convertCmd} {convertArgs}");
+        await RunBinarySubprocess(convertCmd, convertArgs, data, async (r) =>
+        {
+            // was -alpha off{sharpen} -negate
             data = await ReadAllBytesAsync(r.BaseStream);
         });
 
         string? results = null;
-        await RunBinarySubprocess("/usr/bin/tesseract", "- -", data, async (r) => {
+        var tesseractCmd = "/usr/bin/tesseract";
+        var tesseractArgs = $"{_tesseractExtraParameters} - -";
+        logger.Debug($"Running tesseract command: {tesseractCmd} {tesseractArgs}");
+        await RunBinarySubprocess(tesseractCmd, tesseractArgs, data, async (r) =>
+        {
             results = await r.ReadToEndAsync();
         });
 

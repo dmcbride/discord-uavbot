@@ -57,7 +57,7 @@ partial class DatabaseService
         await connect.ExecuteAsync(query, poll);
     }
 
-    public async Task<Poll> GetPoll(ulong pollId, ulong guildId)
+    public async Task<Poll?> GetPoll(ulong pollId, ulong guildId)
     {
         using var connect = Connect;
         var query = $@"
@@ -68,7 +68,7 @@ partial class DatabaseService
         return await connect.QueryFirstOrDefaultAsync<Poll>(query, new { poll_id = pollId, guild_id = guildId });
     }
 
-    public async Task<Poll> GetPollByUserKey(string userKey, ulong guildId)
+    public async Task<Poll?> GetPollByUserKey(string userKey, ulong guildId)
     {
         using var connect = Connect;
         var query = $@"
@@ -104,13 +104,36 @@ partial class DatabaseService
         await connect.ExecuteAsync(query, votes.Select(vote => new { poll_id = poll.PollId, user_id = userId, vote }));
 
         // then get the number of votes
-        query = $@"
-            SELECT COUNT(DISTINCT user_id) FROM {Table.PollVotes}
-            WHERE poll_id = @poll_id;";
-
-        var voteCount = await connect.QuerySingleAsync<int>(query, new { poll_id = poll.PollId });
+        var voteCount = await PollVoteCount(poll.PollId, poll.GuildId);
 
         return (rows > 0, voteCount); // return true if the user had already voted
+    }
+
+    public async Task<int> PollVoteCount(ulong pollId, ulong guildId)
+    {
+        using var connect = Connect;
+        var query = $"""
+            SELECT COUNT(DISTINCT user_id)
+            FROM {Table.PollVotes} pv
+            JOIN {Table.Polls} ON {Table.Polls}.poll_id = pv.poll_id
+            WHERE pv.poll_id = @poll_id
+            AND guild_id = @guild_id
+            """;
+        return await connect.QuerySingleAsync<int>(query, new { poll_id = pollId, guild_id = guildId });
+    }
+
+    public async Task<(bool voted, string? vote)> GetUserVote(ulong pollId, ulong guildId, ulong userId)
+    {
+        using var connect = Connect;
+        var query = $@"
+            SELECT vote
+            FROM {Table.PollVotes}
+            WHERE poll_id = @poll_id
+            AND user_id = @user_id";
+        var votes = (await connect.QueryAsync<int>(query, new { poll_id = pollId, user_id = userId })).ToArray();
+        var poll = await GetPoll(pollId, guildId);
+
+        return (votes is not null && votes.Length != 0, votes is null ? null : string.Join(", ", votes.Select(v => poll!.GetOptionText(v))));
     }
 
     public async Task<Poll?> GetNextExpiringPoll()

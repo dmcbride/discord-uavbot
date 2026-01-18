@@ -7,9 +7,13 @@ namespace uav.logic.tests.Database.Model
 {
     public class UserConfigTests
     {
-      [Test]
+#pragma warning disable IDE1006 // Naming Styles
+        public record CreditsExpectation(int totalCredits, int loungeBonus, int station, int exodus);
+#pragma warning restore IDE1006 // Naming Styles
+
+        [Test]
       [MethodDataSource(typeof(UserConfigTests), nameof(TestCalculateCreditsData))]
-      public async Task TestCalculateCredits(UserConfig userConfig, int baseCredits, (int totalCredits, int loungeBonus, int station, int exodus) expected)
+      public async Task TestCalculateCredits(UserConfig userConfig, int baseCredits, CreditsExpectation expected)
       {
           // Act
           var result = userConfig.CalculateCredits(baseCredits);
@@ -23,7 +27,7 @@ namespace uav.logic.tests.Database.Model
 
           await Assert.That(reverse).IsEqualTo(baseCredits);
       }
-      public static IEnumerable<Func<(UserConfig userConfig, int baseCredits, (int totalCredits, int loungeBonus, int station, int exodus) expected)>> TestCalculateCreditsData()
+      public static IEnumerable<Func<(UserConfig userConfig, int baseCredits, CreditsExpectation expected)>> TestCalculateCreditsData()
       {
           yield return () => (
             new UserConfig {
@@ -33,7 +37,7 @@ namespace uav.logic.tests.Database.Model
                 Credits4 = 1,
             },
             812,
-            (totalCredits: 5966, loungeBonus: 1705, station: 466, exodus: 2983)
+            new CreditsExpectation(totalCredits: 5966, loungeBonus: 1705, station: 466, exodus: 2983)
           );
 
           yield return () => (
@@ -44,7 +48,7 @@ namespace uav.logic.tests.Database.Model
                 Credits4 = 0,
             },
             812,
-            (totalCredits: 812, loungeBonus: 0, station: 0, exodus: 0)
+            new CreditsExpectation(totalCredits: 812, loungeBonus: 0, station: 0, exodus: 0)
           );
 
           yield return () => (
@@ -55,7 +59,7 @@ namespace uav.logic.tests.Database.Model
                 Credits4 = 1,
             },
             0,
-            (totalCredits: 0, loungeBonus: 0, station: 0, exodus: 0)
+            new CreditsExpectation(totalCredits: 0, loungeBonus: 0, station: 0, exodus: 0)
           );
 
           yield return () => (
@@ -66,7 +70,7 @@ namespace uav.logic.tests.Database.Model
                 Credits4 = 1,
             },
             838,
-            (totalCredits: 6158, loungeBonus: 1760, station: 481, exodus: 3079)
+            new CreditsExpectation(totalCredits: 6158, loungeBonus: 1760, station: 481, exodus: 3079)
           );
       }
     }

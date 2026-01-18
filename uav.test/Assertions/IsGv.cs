@@ -1,41 +1,56 @@
 using System;
-using TUnit.Assertions.AssertConditions;
+using TUnit.Assertions.Core;
 using uav.logic.Models;
 
 namespace uav.test.Assertions;
 
-public class IsGv : ExpectedValueAssertCondition<GV, GV>
+public class IsGvAssertion : Assertion<GV>
 {
-    public IsGv(GV expectedValue) : base(expectedValue) { }
+    private readonly GV _expectedValue;
+    private const double Epsilon = 0.01; // 1% tolerance
 
-    protected override string GetExpectation()
+    public IsGvAssertion(AssertionContext<GV> context, GV expectedValue)
+        : base(context)
     {
-        return $"Expected GV to be {this.ExpectedValue}";
+        _expectedValue = expectedValue;
     }
 
-    protected override ValueTask<AssertionResult> GetResult(GV? actualValue, GV? expectedValue)
+    protected override Task<AssertionResult> CheckAsync(EvaluationMetadata<GV> metadata)
     {
-        if (actualValue == null && expectedValue == null)
+        var actualValue = metadata.Value;
+        var exception = metadata.Exception;
+
+        if (exception != null)
         {
-            return AssertionResult.Passed;
+            return Task.FromResult(AssertionResult.Failed($"threw {exception.GetType().Name}"));
+        }
+
+        if (actualValue == null && _expectedValue == null)
+        {
+            return Task.FromResult(AssertionResult.Passed);
         }
 
         if (actualValue == null)
         {
-            return AssertionResult.Fail($"actual GV is null");
+            return Task.FromResult(AssertionResult.Failed("actual GV is null"));
         }
 
-        if (expectedValue == null)
+        if (_expectedValue == null)
         {
-            return AssertionResult.Fail($"expected GV is null");
+            return Task.FromResult(AssertionResult.Failed("expected GV is null"));
         }
 
-        if (Math.Abs(actualValue - expectedValue) / expectedValue < 0.01)
+        if (Math.Abs(actualValue - _expectedValue) / _expectedValue < Epsilon)
         {
-            return AssertionResult.Passed;
+            return Task.FromResult(AssertionResult.Passed);
         }
 
-        return AssertionResult.Fail($"expected GV to be {expectedValue} but was {actualValue}");
+        return Task.FromResult(AssertionResult.Failed($"expected GV to be {_expectedValue} but was {actualValue}"));
+    }
+
+    protected override string GetExpectation()
+    {
+        return $"to be {_expectedValue}";
     }
 }
 

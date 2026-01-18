@@ -246,9 +246,53 @@ public class Poll : BaseSlashCommandWithSubcommands
         await RespondAsync(response, ephemeral: true);
 
         // update the message
-        await Interaction.Channel.ModifyMessageAsync(poll.MsgId, p => {
-           p.Embed = poll.ToEmbedded(voteResults.voteCount).Build();
+        await Interaction.Channel.ModifyMessageAsync(poll.MsgId, p =>
+        {
+            p.Embeds = new[] {
+               poll.ToEmbedded(voteResults.voteCount).Build()
+           };
+        //    p.Components = poll.ToSelectMenu(CommandName);
         });
+    }
+
+    [ComponentHandler("voted-in")]
+    private async Task VotedIn(ReadOnlyMemory<string> options)
+    {
+        if (!ulong.TryParse(options.Span[0], out var pollId))
+        {
+            await RespondAsync("Invalid poll id", ephemeral: true);
+            return;
+        }
+
+        var (voted, voteText) = await databaseService.GetUserVote(pollId, Guild!.Id, Interaction.User.Id);
+        if (!voted)
+        {
+            await RespondAsync("You have not voted in this poll.", ephemeral: true);
+            return;
+        }
+        await RespondAsync($"You voted for: {voteText!}", ephemeral: true);
+
+        // update the message only because I broke it.
+        try
+        {
+            logger.Debug($"Updating poll {pollId} for user {Interaction.User.Id} who voted for {voteText}");
+            var voteCount = await databaseService.PollVoteCount(pollId, Guild!.Id);
+            var poll = await databaseService.GetPoll(pollId, Guild!.Id);
+            logger.Debug($"Poll {poll!.PollUserKey} has {voteCount} votes");
+            await Interaction.Channel.ModifyMessageAsync(poll.MsgId, p =>
+            {
+                logger.Debug($"Updating poll {poll.PollUserKey} with vote count {voteCount}");
+                p.Embeds = new[] {
+               poll.ToEmbedded(voteCount).Build()
+               };
+                //p.Components = poll.ToSelectMenu(CommandName);
+            });
+        }
+        catch (Exception e)
+        {
+            logger.Error($"Failed to update poll {pollId} for user {Interaction.User.Id} who voted for {voteText}", e);
+            await RespondAsync("Failed to update poll. Please try again later.", ephemeral: true);
+        }
     }
 
     [ComponentHandler("results")]

@@ -58,30 +58,29 @@ public class Poll : Job
         await _client.GetGuild(_nextPoll.GuildId).GetTextChannel(_nextPoll.ChannelId).ModifyMessageAsync(
             _nextPoll.MsgId,
             p => {
-                p.Embed = new Discord.EmbedBuilder()
+                p.Embed = new EmbedBuilder()
                     .WithFooter($"Poll ID: {_nextPoll.PollUserKey} (poll {_nextPoll.PollId})")
                     .WithTimestamp(_nextPoll.EndDate)
                     .WithDescription(_nextPoll.Description)
-                    .WithColor(Discord.Color.Red)
+                    .WithColor(Color.Red)
                     .AddField("Number of Users Participating", usersParticipating, true)
                     .AddField("Results", $"```{GetPollResultsString(pollResults, pollValues)}\n```", false)
                     .Build();
                 // add in a button to retrieve the detailed results
-                p.Components = Optional.Create<Discord.MessageComponent>(
+                p.Components =
                     new ComponentBuilder()
                         .WithButton(new ButtonBuilder()
                             .WithLabel("Detailed Results")
                             .WithCustomId($"poll:results:{_nextPoll.PollId}")
                             .WithStyle(ButtonStyle.Primary)
                         )
-                        .Build()
-                );
+                        .Build();
             });
 
         // send a message to the channel with the detailed results
         await _client.GetGuild(_nextPoll.GuildId).GetTextChannel(Channels.DiscordServerNews).SendMessageAsync(
             @$"Poll ID ""{_nextPoll.PollUserKey}"" has ended! If you'd like to look at past polls or vote in open polls check out {MentionUtils.MentionChannel(_nextPoll.ChannelId)} There you can also click on ""Detailed Results"" to see the breakdown of how everyone voted.",
-            embed: new Discord.EmbedBuilder()
+            embed: new EmbedBuilder()
                 .WithFooter($"Poll ID: {_nextPoll.PollUserKey} (poll {_nextPoll.PollId})")
                 .WithTimestamp(_nextPoll.EndDate)
                 .WithDescription(_nextPoll.Description)

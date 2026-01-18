@@ -9,6 +9,7 @@ cd "${thisdir}"/uav.bot
 if dotnet publish -c Release -o "$mydir/release"; then
   # cd "$mydir/release"
   # dotnet uav.dll
+  sudo cp ../uav /etc/init.d/uav
   sudo /etc/init.d/uav restart
 else
   echo "Failed to build/publish"

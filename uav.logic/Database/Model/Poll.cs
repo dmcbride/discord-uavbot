@@ -19,6 +19,22 @@ public class Poll : IDapperMappedType
     public DateTimeOffset EndDate { get; set; }
     public OptionsType Options { get; set; }
     public bool Completed { get; set; }
+
+    private Dictionary<int, string>? _optionsDict;
+
+    public string GetOptionText(int optionId)
+    {
+        if (_optionsDict == null)
+        {
+            _optionsDict = new Dictionary<int, string>();
+            foreach (var option in Options.Options)
+            {
+                _optionsDict[option.Id] = option.Text;
+            }
+        }
+
+        return _optionsDict.TryGetValue(optionId, out var text) ? text : "Unknown Option";
+    }
     
     public struct OptionsType : DatabaseService.IDapperJsonType
     {
@@ -59,6 +75,15 @@ public class Poll : IDapperMappedType
 
         return new ComponentBuilder()
             .WithSelectMenu(sm)
+            .WithButton(PollDidIVote(),1)
             .Build();
+    }
+
+    private ButtonBuilder PollDidIVote()
+    {
+        return new ButtonBuilder()
+                .WithLabel("Did I already vote?")
+                .WithCustomId($"poll:voted-in:{PollId}")
+                .WithStyle(ButtonStyle.Secondary);
     }
 }

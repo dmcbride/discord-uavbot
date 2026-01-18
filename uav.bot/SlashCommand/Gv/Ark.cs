@@ -110,7 +110,7 @@ public class Ark : BaseGvSlashCommand
 
 
         var message = $@"To get to a GV of **{goalGvValue}** from **{gvValue}** starting with cash-on-hand of **{cashValue}**, you need **{arks}** {IpmEmoji.boostcashwindfall} arks bringing you to a GV of **{newValue}**.
-At about {arksPerHour * cashArkChance} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.{daysMessage}
+At about {arksPerHour * cashArkChance:F1} {IpmEmoji.boostcashwindfall} arks per hour, that is about {hours}.{daysMessage}
 During this time, you can expect to get about {dm} {IpmEmoji.ipmdm} arks, for a total of {5 * dm} {IpmEmoji.ipmdm}.
 
 {Support.SupportStatement}";

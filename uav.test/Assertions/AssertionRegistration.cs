@@ -1,17 +1,17 @@
 using System.Runtime.CompilerServices;
-using TUnit.Assertions.AssertConditions.Interfaces;
-using TUnit.Assertions.AssertionBuilders;
+using TUnit.Assertions.Core;
 using uav.logic.Models;
 
 namespace uav.test.Assertions;
 
 public static class AssertionRegistration
 {
-    public static InvokableValueAssertionBuilder<GV> IsGv(this IValueSource<GV> valueSource, GV expectedValue, [CallerArgumentExpression(nameof(expectedValue))] string? doNotPassIn1 = null)
+    public static IsGvAssertion IsGv(
+        this IAssertionSource<GV> source,
+        GV expectedValue,
+        [CallerArgumentExpression(nameof(expectedValue))] string? expression = null)
     {
-        return valueSource.RegisterAssertion(
-            assertCondition: new IsGv(expectedValue),
-            argumentExpressions: [doNotPassIn1]
-        );
+        source.Context.ExpressionBuilder.Append($".IsGv({expression})");
+        return new IsGvAssertion(source.Context, expectedValue);
     }
 }

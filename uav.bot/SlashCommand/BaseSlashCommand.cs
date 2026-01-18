@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using log4net;
-using log4net.Core;
 using uav.bot.Attributes;
 using uav.logic.Constants;
 using uav.logic.Database;
@@ -44,6 +43,8 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
 
     public SocketGuild? Guild => User.Guild;
 
+    protected string FullCommandString => Command?.Data.Name ?? Modal?.Data.CustomId ?? Component!.Data.CustomId;
+
     public async Task DoCommand()
     {
         // save user.
@@ -55,12 +56,12 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine(e);
+            logger.Error($"Error occurred with command {FullCommandString}", e);
         }
 
         if (!isResponded)
         {
-            await databaseService.AddHistory(DbUser, CommandString(), null, "No response");
+            await databaseService.AddHistory(DbUser, FullCommandString, OptionsAsString(), "No response");
         }
     }
 
@@ -118,11 +119,12 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
     {
         isResponded = true;
 
-        var command = CommandString();
+        var optionsString = OptionsAsString();
 
         var response = responses().First(x => x is not null && x.Length > 0);
 
-        await databaseService.AddHistory(DbUser, Command?.Data.Name ?? Modal?.Data.CustomId ?? Component!.Data.CustomId, command, response);
+        logger.Debug($"Saving history for user {DbUser.Name}, command {FullCommandString}, options {optionsString} with response {response}");
+        await databaseService.AddHistory(DbUser, FullCommandString, optionsString, response);
 
         IEnumerable<string?> responses()
         {
@@ -163,7 +165,7 @@ public abstract class BaseSlashCommand : ISlashCommand, ICommandHandler<Componen
         }
     }
 
-    private string CommandString()
+    private string OptionsAsString()
     {
         var commandParams = new List<string>();
 
